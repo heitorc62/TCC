@@ -25,6 +25,15 @@ def evaluate_model(model, dataloader, device):
     return acc.item(), all_labels, all_preds
 
 
+def update_best_model(stats, model, test_acc, test_labels, test_preds):
+    stats['test_labels'] = test_labels
+    stats['test_preds'] = test_preds
+    best_acc = test_acc
+    best_model_wts = copy.deepcopy(model.state_dict())
+    return best_acc, best_model_wts
+    
+
+
 
 def train_model(model, dataloaders, criterion, optimizer, scheduler, device, num_epochs=25):
     since = time.time()
@@ -57,7 +66,7 @@ def train_model(model, dataloaders, criterion, optimizer, scheduler, device, num
             running_corrects = 0
 
             # Iterate over data.
-            for inputs, labels in dataloaders[phase]:
+            for batch_idx, (inputs, labels) in enumerate(dataloaders[phase]):
                 inputs = inputs.to(device)
                 labels = labels.to(device)
 
@@ -79,10 +88,17 @@ def train_model(model, dataloaders, criterion, optimizer, scheduler, device, num
                     if phase == 'train':
                         loss.backward()
                         optimizer.step()
+                        
+                        print("After optimizer step: ")
+                        # After each step, evaluate the model on the test set
+                        test_acc, test_labels, test_preds = evaluate_model(model, dataloaders['test'], device)
+                        print('({}/{}) Test Accuracy: {:4f}\n'.format(batch_idx, len(dataloaders[phase]), test_acc))
+                        stats['test_acc'].append(test_acc)
+                        if test_acc > best_acc:
+                            best_acc, best_model_wts = update_best_model(stats, model, test_acc, test_labels, test_preds)
 
                 #if phase == 'train':
                 #    scheduler.step()  # Adjust the learning rate
-                    
                     
                 # statistics
                 running_loss += loss.item() * inputs.size(0)
@@ -100,19 +116,7 @@ def train_model(model, dataloaders, criterion, optimizer, scheduler, device, num
             else:
                 stats["train_acc"].append(epoch_acc.item())
                 stats["train_loss"].append(epoch_loss)
-
-        # After each epoch, evaluate the model on the test set
-        test_acc, test_labels, test_preds = evaluate_model(model, dataloaders['test'], device)
-        print('Test Accuracy: {:4f}'.format(test_acc))
-        stats['test_acc'].append(test_acc)
-
-        if test_acc > best_acc:
-            stats['test_labels'] = test_labels
-            stats['test_preds'] = test_preds
-            best_acc = test_acc
-            best_model_wts = copy.deepcopy(model.state_dict())
-            
-        print()
+        
 
     time_elapsed = time.time() - since
     print('Training complete in {:.0f}m {:.0f}s'.format(time_elapsed // 60, time_elapsed % 60))
