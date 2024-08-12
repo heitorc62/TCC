@@ -35,7 +35,7 @@ def update_best_model(stats, model, test_acc, test_labels, test_preds):
 
 
 
-def train_model(model, dataloaders, criterion, optimizer, scheduler, device, num_epochs=25):
+def train_model(model, dataloaders, criterion, optimizer, scheduler, device, num_epochs=30):
     since = time.time()
     
     stats = {
@@ -97,8 +97,8 @@ def train_model(model, dataloaders, criterion, optimizer, scheduler, device, num
                         if test_acc > best_acc:
                             best_acc, best_model_wts = update_best_model(stats, model, test_acc, test_labels, test_preds)
 
-                #if phase == 'train':
-                #    scheduler.step()  # Adjust the learning rate
+                if phase == 'train':
+                    scheduler.step()  # Adjust the learning rate
                     
                 # statistics
                 running_loss += loss.item() * inputs.size(0)
