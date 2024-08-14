@@ -88,17 +88,6 @@ def train_model(model, dataloaders, criterion, optimizer, scheduler, device, num
                     if phase == 'train':
                         loss.backward()
                         optimizer.step()
-                        
-                        print("After optimizer step: ")
-                        # After each step, evaluate the model on the test set
-                        test_acc, test_labels, test_preds = evaluate_model(model, dataloaders['test'], device)
-                        print('({}/{}) Test Accuracy: {:4f}\n'.format(batch_idx, len(dataloaders[phase]), test_acc))
-                        stats['test_acc'].append(test_acc)
-                        if test_acc > best_acc:
-                            best_acc, best_model_wts = update_best_model(stats, model, test_acc, test_labels, test_preds)
-
-                if phase == 'train':
-                    scheduler.step()  # Adjust the learning rate
                     
                 # statistics
                 running_loss += loss.item() * inputs.size(0)
@@ -109,13 +98,21 @@ def train_model(model, dataloaders, criterion, optimizer, scheduler, device, num
             epoch_acc = running_corrects.double() / len(dataloaders[phase].dataset)
 
             print('{} Loss: {:.4f} Acc: {:.4f}'.format(phase, epoch_loss, epoch_acc))
-
-            if phase == 'val':
-                stats["val_acc"].append(epoch_acc.item())
-                stats["val_loss"].append(epoch_loss)
-            else:
+                
+            if phase == 'train':
                 stats["train_acc"].append(epoch_acc.item())
                 stats["train_loss"].append(epoch_loss)
+                scheduler.step()  # Adjust the learning rate after each epoch
+            else:
+                stats["val_acc"].append(epoch_acc.item())
+                stats["val_loss"].append(epoch_loss)
+            
+            # After each epoch, evaluate the model on the test set
+            test_acc, test_labels, test_preds = evaluate_model(model, dataloaders['test'], device)
+            print('({}/{}) Test Accuracy: {:4f}\n'.format(batch_idx, len(dataloaders[phase]), test_acc))
+            stats['test_acc'].append(test_acc)
+            if test_acc > best_acc:
+                best_acc, best_model_wts = update_best_model(stats, model, test_acc, test_labels, test_preds)
         
 
     time_elapsed = time.time() - since

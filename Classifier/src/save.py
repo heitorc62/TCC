@@ -20,7 +20,5 @@ def save_model(model, output_dir):
 def save_stats(stats, output_dir):
     stats_path = os.path.join(output_dir, "stats.csv")
     make_path(stats_path)
-    print("stats = ")
-    print(stats)
     with open(stats_path, 'w') as f:
         json.dump(stats, f)

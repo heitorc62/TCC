@@ -1,6 +1,5 @@
 import torch
 from torchvision import models
-from torchvision.models.vgg import VGG16_BN_Weights
 import torch.nn as nn
 import torch.optim as optim
 from torch.optim import lr_scheduler
@@ -10,7 +9,7 @@ def initialize_model(num_classes=39, input_size = 224):
     model_ft = None
     # Defining the model as GoogLeNet:
     print("Using pretrained model!!")
-    model_ft = torch.hub.load('pytorch/vision:v0.10.0', 'googlenet', pretrained=True)
+    model_ft = models.googlenet(weights='IMAGENET1K_V1')
     
     in_features = model_ft.fc.in_features
     model_ft.fc = nn.Linear(in_features, num_classes)
