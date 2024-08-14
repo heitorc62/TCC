@@ -56,7 +56,7 @@ def train_model(model, dataloaders, criterion, optimizer, scheduler, device, num
         print('-' * 10)
 
         # Each epoch has a training and validation phase
-        for phase in ['train', 'val']:                
+        for phase in ['train', 'val', 'test']:                
             if phase == 'train':
                 model.train()  # Set model to training mode
             else:
@@ -103,17 +103,18 @@ def train_model(model, dataloaders, criterion, optimizer, scheduler, device, num
                 stats["train_acc"].append(epoch_acc.item())
                 stats["train_loss"].append(epoch_loss)
                 scheduler.step()  # Adjust the learning rate after each epoch
-            else:
+            elif phase == 'val':
                 stats["val_acc"].append(epoch_acc.item())
-                stats["val_loss"].append(epoch_loss)
-            
-            # After each epoch, evaluate the model on the test set
-            test_acc, test_labels, test_preds = evaluate_model(model, dataloaders['test'], device)
-            print('({}/{}) Test Accuracy: {:4f}\n'.format(batch_idx, len(dataloaders[phase]), test_acc))
-            stats['test_acc'].append(test_acc)
-            if test_acc > best_acc:
-                best_acc, best_model_wts = update_best_model(stats, model, test_acc, test_labels, test_preds)
+                stats["val_loss"].append(epoch_loss) 
+            elif phase == 'test':   
+                # After each epoch, evaluate the model on the test set
+                test_acc, test_labels, test_preds = evaluate_model(model, dataloaders['test'], device)
+                print('Test Accuracy: {:4f}\n'.format(test_acc))
+                stats['test_acc'].append(test_acc)
+                if test_acc > best_acc:
+                    best_acc, best_model_wts = update_best_model(stats, model, test_acc, test_labels, test_preds)
         
+            
 
     time_elapsed = time.time() - since
     print('Training complete in {:.0f}m {:.0f}s'.format(time_elapsed // 60, time_elapsed % 60))

@@ -1,12 +1,12 @@
 #!/bin/bash
 
 nohup python run.py \
-    --epochs 1 \
+    --epochs 30 \
     --device cuda:1 \
     --dataset_dir /home/heitorc62/PlantsConv/dataset/Plant_leave_diseases_dataset_without_augmentation \
     --testset_dir /home/heitorc62/PlantsConv/Plants-ConvNets-ViT/TCC/generalization/datasets/IPM_dataset \
-    --output_dir /home/heitorc62/PlantsConv/TCC/Classifier/results/REGULAR \
-    &> out/REGULAR.out &
+    --output_dir /home/heitorc62/PlantsConv/TCC/Classifier/results/REGULAR30 \
+    &> out/REGULAR30.out &
 
 
 #nohup python run.py \
