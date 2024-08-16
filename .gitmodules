@@ -1,0 +1,3 @@
+[submodule "plantvillage_deeplearning_paper_analysis"]
+	path = plantvillage_deeplearning_paper_analysis
+	url = git@github.com:pedrolucasrsc/plantvillage_deeplearning_paper_analysis.git
