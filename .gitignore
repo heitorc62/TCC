@@ -1,1 +1,5 @@
-TCC_datasets/
+# Ignore everything in TCC_datasets/
+TCC_datasets/*
+
+# Unignore specific_dir inside TCC_datasets/
+!TCC_datasets/Test_Set/
