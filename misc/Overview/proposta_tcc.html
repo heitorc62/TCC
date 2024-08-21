@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="pt" class=" qwqqevhdx idc0_343"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta charset="UTF-8">
+    <title>TCC Heitor</title>
+    <link rel="icon" href="https://linux.ime.usp.br/~heitor/mac0499/leaf.png" type="image/x-icon">
+    <style>
+        body {
+            text-align: justify;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+	<p><b>Nome do aluno:</b> Heitor Barroso Cavalcante</p>
+	<p><b>Nome da orientadora:</b> Nina S. T. Hirata</p>
+	<p>	
+		<b>Título do trabalho:</b><br>
+		"Desvendando Viés em Visão Computacional: Um Estudo do Dataset PlantVillage"
+	</p>
+	<p>
+		<b>Resumo do trabalho:</b><br>
+		Nos dias atuais, a agricultura ainda tem muitas perdas em suas 
+plantações devido às pragas (1). Por isso, o desenvolvimento de técnicas
+ automatizadas para a detecção
+		precoce de doenças em plantas são um assunto de alto interesse para a 
+sociedade. Em 2015, os pesquisadores David. P. Hughes e Marcel Salathe 
+deram um passo
+		significativo nesse caminho: a construção do dataset PlantVillage (2).
+ Esse é o maior e mais utilizado dataset de visão computacional aplicado
+ ao domínio de
+		identificação de doenças em imagens de folhas de plantas (3). 
+Infelizmente, apesar dos modelos de Aprendizado de Máquina implementados
+ sobre esse dataset atingirem
+		ótimas métricas, eles não generalizam bem para dados reais (3), (4). 
+Esse problema tem relação com a qualidade dos dados que constituem o 
+dataset (4). Mais especificamente,
+		a performance excessivamente boa sugere que podem existir vieses no 
+dataset que facilitem a tarefa de classificação. Portanto, o escopo 
+desse trabalho é investigar
+		o dataset PlantVillage com o objetivo de identificar características 
+enviesadas que prejudicam a qualidade dos dados e dos modelos de 
+classificação de doenças de
+		plantas que foram treinados nesse dataset.
+	</p>
+
+	<p>
+		<b>Proposta de trabalho:</b><br>
+		Como dito no resumo do trabalho, a ideia é investigar possíveis vieses
+ no dataset PlantVillage. Em um primeiro momento, tivemos a ideia de 
+fazer um plot t-SNE da
+		separação dos dados produzida pelas camadas convolucionais da CNN que 
+estamos utilizando para essa tarefa. Nesse plot, é possível identificar 
+pares de clusters
+		com diferenças visíveis no balanço de branco e exposição. Além disso, é
+ possível notar diferenças consideraveis entre os planos de fundo de 
+algumas das classes
+		do dataset. Assim, estamos considerando 3 principais características 
+do dataset podem constituir vieses:
+		</p><ul>
+			<li>Plano de fundo das imagens;</li>
+			<li>Balanço de branco;</li>
+			<li>Exposição.</li>
+		</ul>
+
+		Já treinamos modelos considerando alterações no dataset que são 
+produzidas apartir de processamentos de imagem que tratam essas 
+características (remoção de plano
+		de fundo, correção de balanço de branco e correção de exposição). 
+Esses modelos apresentaram performance inferior comparando-se com o 
+modelo treinado com o dataset
+		regular. Isso indica que esses processamentos estão tornando a tarefa 
+de classificação mais difícil e, portanto, possivelmente tratando vieses
+ do dataset. Contudo,
+		é difícil afirmar que estamos removendo vies ao invés de prejudicar 
+características importantes para a classificação. Desse modo, devemos 
+pensar em maneiras de como
+		podemos fazer tal afirmação. Atualmente, consideramos o seguinte 
+roteiro para isso:
+
+		<ol>
+			<ol>
+				<li>Primeira etapa:</li>
+				<ul>
+					<li>Utilizar aprendizado não supervisionado para associar, a cada imagem, valores de balanço de branco e exposição;</li>
+					<li>Utilizar métodos estatísticos para determinar uma possível 
+correlação espúria entre esses valores e o output do modelo 
+classificador;</li>
+					<li>Argumentar sobre o comportamento do modelo a partir de análises de resultados em um grupo selecionado de imagens:</li>
+					<ul>
+						<li>Analisar diferenças dos resultados do modelo treinado com o dataset original comparando uma imagem regular vs imagem processada;</li>
+						<li>Analisar diferenças dos heatmaps desse mesmo modelo dado o mesmo par de imagens.</li>
+					</ul>
+				</ul>
+				<li>Segunda etapa:</li>
+				<ul>
+					<li>Treinar modelos utilizando datasets com esse processamentos de imagem;</li>
+					<li>Medir a qualidade dos clusters separados ao final das camadas convolucionais da CNN de cada um desses novos modelos;</li>
+					<li>Comparar a qualidade desses novos clusters (que devem ser menos
+ definidos, mais dispersos) com os clusters oriundos do dataset 
+original.</li>
+				</ul>
+				<li>Terceira etapa:</li>
+				<ul>
+					<li>Escrever monografia e artigo sumarizando os resultados do trabalho.</li>
+				</ul>
+		</ol>
+
+	<p></p>
+	<p>
+		<b>Referências</b><br>
+		(1) Scientific review of the impact of climate change on plant pests. 
+(2021). FAO on behalf of the IPPC Secretariat. 
+https://doi.org/10.4060/cb4769en <br><br>
+
+		(2) Hughes, David. P.,&amp; Salathe, M. (2015). An open access 
+repository of images on plant health to enable the development of mobile
+ disease diagnostics (Version 2).
+		arXiv. https://doi.org/10.48550/ARXIV.1511.08060<br><br>
+
+		(3) Yao, J., Tran, S. N., Sawyer, S., &amp; Garg, S. (2023). Machine 
+learning for leaf disease classification: data, techniques and 
+applications. 
+		In Artificial Intelligence Review (Vol. 56, Issue S3, pp. 3571–3616). 
+Springer Science and Business Media LLC. 
+https://doi.org/10.1007/s10462-023-10610-4 <br><br>
+
+		(4) Noyan, M. A. (2022). Uncovering bias in the PlantVillage dataset 
+(Version 1). arXiv. https://doi.org/10.48550/ARXIV.2206.04374 <br>
+
+	</p>
+    </ol></div>
+
+
+</body></html>
