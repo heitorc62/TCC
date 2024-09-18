@@ -3,3 +3,6 @@ TCC_datasets/*
 
 # Unignore specific_dir inside TCC_datasets/
 !TCC_datasets/Test_Set/
+
+Detector/data/plantdoc-DatasetNinja.tar
+Detector/data/plantdoc-DatasetNinja/

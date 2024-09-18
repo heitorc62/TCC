@@ -1,0 +1,17 @@
+# tomato.yaml
+path: ../data/plantdoc-Tomato-YOLO
+train: images/train  # Train images (relative to 'path')
+val: images/val  # Val images (relative to 'path')
+
+names:
+  0: 'Tomato Early blight leaf'
+  1: 'Tomato leaf'
+  2: 'Tomato leaf bacterial spot'
+  3: 'Tomato leaf late blight'
+  4: 'Tomato leaf mosaic virus'
+  5: 'Tomato leaf yellow virus'
+  6: 'Tomato mold leaf'
+  7: 'Tomato Septoria leaf spot'
+  8: 'Tomato two spotted spider mites leaf'
+
+nc: 9  # Number of classes
