@@ -1,5 +1,4 @@
 Flask
-torch
-torchvision
+ultralytics
 Pillow
 requests

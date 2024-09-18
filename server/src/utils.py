@@ -1,5 +1,6 @@
 from PIL import Image
 import torch, torchvision, sys
+from ultralytics import YOLO
 
 def crop_image(image, box):
     left, top, right, bottom = box
@@ -33,13 +34,18 @@ def load_model(model_config, device):
             if hasattr(model, 'roi_heads'):
                 in_features = model.roi_heads.box_predictor.cls_score.in_features
                 model.roi_heads.box_predictor = torchvision.models.detection.faster_rcnn.FastRCNNPredictor(in_features, num_classes)
+        model.load_state_dict(torch.load(model_path, map_location=device))
+        model.to(device)
+        model.eval()
+    elif architecture == 'yolov8':
+        # Load YOLOv8 model
+        model = YOLO(model_path)
+        # No need to call model.to(device) or model.eval(), handled internally
     else:
         raise ValueError(f"Unknown architecture '{architecture}'")
 
-    model.load_state_dict(torch.load(model_path, map_location=device))
-    model.to(device)
-    model.eval()
     return model
+
 
 def load_models(config, device):
     models = {}

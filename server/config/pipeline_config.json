@@ -1,9 +1,9 @@
 {
     "models": {
       "object_detection": {
-        "path": "models/object_detection_model.pt",
-        "architecture": "fasterrcnn_resnet50_fpn",
-        "num_classes": 2
+        "path": "../Detector/runs/detect/train/weights/best.pt",
+        "architecture": "yolov8",
+        "num_classes": 9
       },
       "classification": {
         "path": "models/classification_model.pt",
@@ -13,8 +13,15 @@
     },
     "classes": {
       "object_detection": {
-        "0": "background",
-        "1": "leaf"
+        "0": "Tomato Early blight leaf",
+        "1": "Tomato leaf",
+        "2": "Tomato leaf bacterial spot",
+        "3": "Tomato leaf late blight",
+        "4": "Tomato leaf mosaic virus",
+        "5": "Tomato leaf yellow virus",
+        "6": "Tomato mold leaf",
+        "7": "Tomato Septoria leaf spot",
+        "8": "Tomato two spotted spider mites leaf"
       },
       "classification": {
         "0": "Healthy",
@@ -24,7 +31,7 @@
         "4": "Yellow Spot"
       }
     },
-    "tasks": ["object_detection", "classification"],
+    "tasks": ["object_detection"],
     "detection_threshold": 0.5,
     "preprocessing": {
       "classification": {

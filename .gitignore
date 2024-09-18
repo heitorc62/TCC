@@ -6,3 +6,6 @@ TCC_datasets/*
 
 Detector/data/plantdoc-DatasetNinja.tar
 Detector/data/plantdoc-DatasetNinja/
+server/.venv
+
+*.pyc

@@ -1,24 +1,21 @@
 import torch
 from torchvision import transforms
-from src import crop_image
 
-def extract_boxes(detections, detection_threshold, detection_class_names):
+def extract_yolov8_boxes(detections, class_names):
     boxes = []
+    # Detections is a list; we take the first element for a single image
     detection = detections[0]
-    scores = detection['scores'].detach().cpu().numpy()
-    boxes_tensor = detection['boxes'].detach().cpu()
-    labels = detection['labels'].detach().cpu().numpy()
-    for score, box, label in zip(scores, boxes_tensor, labels):
-        if score >= detection_threshold:
-            box = box.numpy().tolist()
-            class_idx = str(label)
-            class_name = detection_class_names.get(class_idx, 'Unknown')
-            boxes.append({
-                'box': box,
-                'class_index': class_idx,
-                'class_name': class_name,
-                'score': float(score)
-            })
+    for bbox in detection.boxes:
+        score = bbox.conf.item()
+        class_idx = int(bbox.cls.item())
+        class_name = class_names.get(str(class_idx), 'Unknown')
+        box = bbox.xyxy[0].tolist()  # [xmin, ymin, xmax, ymax]
+        boxes.append({
+            'box': box,
+            'class_index': str(class_idx),
+            'class_name': class_name,
+            'score': score
+        })
     return boxes
 
 def classify_region(region, model, class_names, device, preprocess_params):
@@ -43,38 +40,20 @@ def classify_region(region, model, class_names, device, preprocess_params):
 
 def process_ml_pipeline(image, models, config, device):
     result = {}
-    tasks = config.tasks
-    classifications = []
+    detection_model = models['object_detection']
+    detection_class_names = config.get_class_names('object_detection')
+    detection_threshold = config.detection_threshold
 
-    if 'object_detection' in tasks:
-        detection_model = models['object_detection']
-        detection_class_names = config.get_class_names('object_detection')
-        detection_threshold = config.detection_threshold
-        input_tensor = transforms.ToTensor()(image).to(device)
-        detections = detection_model([input_tensor])
-        detected_objects = extract_boxes(detections, detection_threshold, detection_class_names)
-        if not detected_objects:
-            result['message'] = 'No regions detected'
-            return result
+    # Run detection using YOLOv8
+    detections = detection_model.predict(image, imgsz=640, conf=detection_threshold, device=device, verbose=False)
 
-        classification_model = models['classification']
-        classification_class_names = config.get_class_names('classification')
-        preprocess_params = config.get_preprocessing_params('classification')
-        for idx, obj in enumerate(detected_objects):
-            box = obj['box']
-            region = crop_image(image, box)
-            class_result = classify_region(region, classification_model, classification_class_names, device, preprocess_params)
-            classifications.append({
-                'region_id': idx,
-                'detection': obj,
-                'classification': class_result
-            })
-        result['classifications'] = classifications
+    # Extract boxes and class names from detections
+    detected_objects = extract_yolov8_boxes(detections, detection_class_names)
+
+    if not detected_objects:
+        result['message'] = 'No regions detected'
     else:
-        classification_model = models['classification']
-        classification_class_names = config.get_class_names('classification')
-        preprocess_params = config.get_preprocessing_params('classification')
-        class_result = classify_region(image, classification_model, classification_class_names, device, preprocess_params)
-        result['classification'] = class_result
+        result['detected_objects'] = detected_objects
 
     return result
+

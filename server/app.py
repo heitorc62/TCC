@@ -30,4 +30,4 @@ def process_image():
     return jsonify(result)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(port=5150, debug=True)
