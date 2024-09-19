@@ -1,0 +1,23 @@
+{
+  "tasks": ["object_detection"],
+  "models": {
+    "object_detection": {
+      "path": "../Detector/runs/detect/train/weights/best.pt",
+      "architecture": "yolov8",
+      "detection_threshold": 0.5,
+      "num_classes": 9,
+      "classes" : {
+        "0": "Tomato Early blight leaf",
+        "1": "Tomato leaf",
+        "2": "Tomato leaf bacterial spot",
+        "3": "Tomato leaf late blight",
+        "4": "Tomato leaf mosaic virus",
+        "5": "Tomato leaf yellow virus",
+        "6": "Tomato mold leaf",
+        "7": "Tomato Septoria leaf spot",
+        "8": "Tomato two spotted spider mites leaf"
+      }
+    }
+  }
+}
+  

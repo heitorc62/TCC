@@ -1,0 +1,1 @@
+from routes import blp as routes_bp
