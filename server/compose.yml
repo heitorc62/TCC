@@ -5,6 +5,8 @@ services:
     environment:
       - SECRET=${SECRET}
       - DATABASE_URL=${DATABASE_URL}
+      - AWS_REGION=${AWS_REGION}
+      - S3_BUCKET=${S3_BUCKET}
     ports:
       - "5150:5150"
     volumes:
@@ -58,8 +60,8 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - LABEL_STUDIO_USERNAME=admin
-      - LABEL_STUDIO_PASSWORD=your_password
+      - LABEL_STUDIO_USERNAME=${LABEL_STUDIO_USERNAME}
+      - LABEL_STUDIO_PASSWORD=${LABEL_STUDIO_PASSWORD}
     volumes:
       - label_studio_data:/label-studio/data
     depends_on:

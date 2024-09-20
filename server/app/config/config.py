@@ -1,8 +1,8 @@
 import os
 
 class Config:
-    SECRET_KEY = os.environ.get('SECRET_KEY', 'your_default_secret_key')
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///app.db'
+    SECRET_KEY = os.environ.get('SECRET')
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     AWS_REGION = os.environ.get('AWS_REGION')
     S3_BUCKET = os.environ.get('S3_BUCKET')

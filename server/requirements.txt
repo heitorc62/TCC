@@ -2,3 +2,11 @@ Flask
 ultralytics
 Pillow
 requests
+flask-smorest
+Werkzeug
+torch
+torchvision
+Flask-SQLAlchemy
+Flask-Migrate
+boto3
+Flask-Mail

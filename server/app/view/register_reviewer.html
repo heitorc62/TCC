@@ -1,0 +1,24 @@
+<!-- templates/register_reviewer.html -->
+{% extends "base.html" %}
+
+{% block title %}Register Reviewer{% endblock %}
+
+{% block content %}
+<h2>Register as a Reviewer</h2>
+
+<!-- Flash Messages -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ category }}" role="alert">
+        {{ message }}
+      </div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
+<!-- Registration Form -->
+<form action="{{ url_for('routes.register_reviewer', token=token) }}" method="POST">
+    <!-- Form fields -->
+</form>
+{% endblock %}
