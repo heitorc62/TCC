@@ -10,7 +10,7 @@ class Config:
     @staticmethod
     def init_app(app):
         # Load additional config from JSON file using from_json
-        config_json_path = os.path.join(app.instance_path, 'config.json')
+        config_json_path = os.path.join(app.instance_path, 'ml_config.json')
         if os.path.exists(config_json_path):
             app.config.from_json(config_json_path)
         else:

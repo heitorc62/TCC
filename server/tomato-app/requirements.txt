@@ -10,3 +10,4 @@ Flask-SQLAlchemy
 Flask-Migrate
 boto3
 Flask-Mail
+psycopg2-binary

@@ -1,7 +1,7 @@
 version: "3"
 services:
   web:
-    build: ./app
+    build: ./tomato-app
     environment:
       - SECRET=${SECRET}
       - DATABASE_URL=${DATABASE_URL}

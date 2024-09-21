@@ -8,9 +8,9 @@ db = SQLAlchemy()
 migrate = Migrate()
 mail = Mail()
 
-def create_app():
+def create_app(config='app.config.config.Config'):
     app = Flask(__name__)
-    app.secret_key = 'supersecret'
+    app.config.from_object(config)
     db.init_app(app)
     migrate.init_app(app, db)
     mail.init_app(app)
