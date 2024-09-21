@@ -1,4 +1,4 @@
-import os
+import os, json
 
 class Config:
     SECRET_KEY = os.environ.get('SECRET')
@@ -10,9 +10,13 @@ class Config:
     @staticmethod
     def init_app(app):
         # Load additional config from JSON file using from_json
-        config_json_path = os.path.join(app.instance_path, 'ml_config.json')
+        current_directory = os.path.dirname(os.path.abspath(__file__))
+        config_json_path = os.path.join(current_directory, 'ml_config.json')
         if os.path.exists(config_json_path):
-            app.config.from_json(config_json_path)
+            with open(config_json_path) as f:
+                config = json.load(f)
+            app.config.update(config)
+            print("Loaded additional configuration from ml_config.json")
         else:
             raise FileNotFoundError(f"Configuration file {config_json_path} not found.")
 

@@ -1,8 +1,8 @@
 from flask_smorest import Blueprint
 from flask import render_template, request, redirect, url_for, flash, jsonify, current_app
-from app import db, device, models
+from app import db
 from PIL import Image
-from models import ReviewerModel, InvitationModel, process_ml_pipeline, save_image_to_db, send_invite_email
+from app.models import ReviewerModel, InvitationModel, process_ml_pipeline, save_image_to_db, send_invite_email
 from werkzeug.security import generate_password_hash, check_password_hash
 import io, secrets
 
@@ -96,7 +96,7 @@ def process_image():
 
     ml_config = current_app.config['ML_CONFIG']
     
-    result = process_ml_pipeline(image, models, ml_config, device)
+    result = process_ml_pipeline(image, current_app.models, ml_config, current_app.device)
     save_image_to_db(image_bytes, result)
 
     return jsonify(result)

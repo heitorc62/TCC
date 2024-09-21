@@ -1,4 +1,4 @@
-from server.app.models.models import ImageModel, ImageStatus
+from app.models.models import ImageModel, ImageStatus
 from app import db, mail
 from flask_mail import Message
 from flask import current_app, render_template, url_for

@@ -13,7 +13,7 @@ class ImageModel(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     path = db.Column(db.String(80), nullable=False)
     status = db.Column(Enum(ImageStatus), nullable=False, default=ImageStatus.PENDING)
-    metadata = db.Column(db.JSON, nullable=False, default={})
+    image_metadata = db.Column(db.JSON, nullable=False, default={})
     
     @staticmethod
     def get_last_image_id():

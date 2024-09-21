@@ -2,7 +2,7 @@
   "tasks": ["object_detection"],
   "models": {
     "object_detection": {
-      "path": "weights/best.pt",
+      "path": "app/config/weights/best.pt",
       "architecture": "yolov8",
       "detection_threshold": 0.5,
       "num_classes": 9,
