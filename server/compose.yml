@@ -7,6 +7,8 @@ services:
       - DATABASE_URL=${DATABASE_URL}
       - AWS_REGION=${AWS_REGION}
       - S3_BUCKET=${S3_BUCKET}
+      - S3_DATASET_PATH=${S3_DATASET_PATH}
+      - S3_NEW_IMAGES_PATH=${S3_NEW_IMAGES_PATH}
     ports:
       - "5000:5000"
     volumes:
