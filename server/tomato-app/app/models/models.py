@@ -10,24 +10,32 @@ class ImageStatus(enum.Enum):
     INCORPORATED = 3
     
 class ImageModel(db.Model):
+    __tablename__ = "images"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    last_id = db.Column(db.Integer, nullable=False)
+    s3_key = db.Column(db.String(80), nullable=False)
+    label_s3_key = db.Column(db.String(80), nullable=False)
+    status = db.Column(db.Enum(ImageStatus), nullable=False, default=ImageStatus.PENDING)
+    image_metadata = db.Column(db.JSON, nullable=False, default={})
+    new_images_path = db.Column(db.String(80), nullable=False)
+    
+    def __init__(self, new_images_path):
+        self.last_id = ImageModel.get_last_image_id()
+        self.new_images_path = new_images_path
+        self.s3_key = self.get_image_s3_key()
+        self.label_s3_key = self.get_label_s3_key()
+    
     @staticmethod
     def get_last_image_id():
-        return ImageModel.query.order_by(ImageModel.id.desc()).first().id
+        last_image = ImageModel.query.order_by(ImageModel.id.desc()).first()
+        return last_image.id if last_image else 0
     
     def get_image_s3_key(self):
         return f'{self.new_images_path}/images/uploaded_image_{self.last_id}.jpg'
         
     def get_label_s3_key(self):
         return f'{self.new_images_path}/labels/uploaded_image_{self.last_id}.txt'
-    
-    __tablename__ = "images"
-    id = db.Column(db.Integer, primary_key=True)
-    last_id = db.Column(db.Integer, nullable=False, default=get_last_image_id())
-    s3_key = db.Column(db.String(80), nullable=False, default=get_image_s3_key())
-    label_s3_key = db.Column(db.String(80), nullable=False, default=get_label_s3_key())
-    status = db.Column(Enum(ImageStatus), nullable=False, default=ImageStatus.PENDING)
-    image_metadata = db.Column(db.JSON, nullable=False, default={})
-    new_images_path = db.Column(db.String(80), nullable=False)
     
     
 class ReviewerModel(db.Model):

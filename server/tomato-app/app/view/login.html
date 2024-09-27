@@ -19,6 +19,14 @@
 
 <!-- Login Form -->
 <form action="{{ url_for('Routes.login') }}" method="POST">
-    <!-- Form fields -->
+  <div class="form-group">
+    <label for="ReviewerLoginUsername">Username</label>
+    <input type="text" class="form-control" id="ReviewerLoginUsername" name="username" placeholder="Enter username">
+  </div>
+  <div class="form-group">
+    <label for="ReviewerLoginPassword">Password</label>
+    <input type="password" class="form-control" id="ReviewerLoginPassword" name="password" placeholder="Password">
+  </div>
+</form>
 </form>
 {% endblock %}
