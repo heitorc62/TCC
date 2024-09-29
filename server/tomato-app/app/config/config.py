@@ -1,4 +1,5 @@
 import os, json
+from flask import current_app
 
 class Config:
     SECRET_KEY = os.environ.get('SECRET')
@@ -27,4 +28,13 @@ class Config:
             print("Loaded additional configuration from ml_config.json")
         else:
             raise FileNotFoundError(f"Configuration file {config_json_path} not found.")
+        
+    @staticmethod
+    def get_class_names(task):
+        # Check if task exists in the config and return class names
+        task_config = current_app.config.get('models', {}).get(task, {})
+        if 'classes' in task_config:
+            return task_config['classes']
+        else:
+            return {}
 

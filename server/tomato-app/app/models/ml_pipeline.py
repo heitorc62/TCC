@@ -1,5 +1,6 @@
 import torch, torchvision
 from ultralytics import YOLO
+from app.config.config import Config
 
 def load_model(model_config, device):
     architecture = model_config['architecture']
@@ -90,8 +91,8 @@ def classify_region(region, model, class_names, device, preprocess_params):
 def process_ml_pipeline(image, models, config, device):
     result = {}
     detection_model = models['object_detection']
-    detection_class_names = config.get_class_names('object_detection')
-    detection_threshold = config.detection_threshold
+    detection_class_names = Config.get_class_names('object_detection')
+    detection_threshold = config.get('models', {})['object_detection']['detection_threshold']
 
     # Run detection using YOLOv8
     detections = detection_model.predict(image, imgsz=640, conf=detection_threshold, device=device, verbose=False)

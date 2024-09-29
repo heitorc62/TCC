@@ -20,11 +20,12 @@ class ImageModel(db.Model):
     image_metadata = db.Column(db.JSON, nullable=False, default={})
     new_images_path = db.Column(db.String(80), nullable=False)
     
-    def __init__(self, new_images_path):
+    def __init__(self, new_images_path, metadata):
         self.last_id = ImageModel.get_last_image_id()
         self.new_images_path = new_images_path
         self.s3_key = self.get_image_s3_key()
         self.label_s3_key = self.get_label_s3_key()
+        self.image_metadata = metadata  # Initialize the image metadata
     
     @staticmethod
     def get_last_image_id():

@@ -3,7 +3,8 @@ from app import db
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 from flask import current_app, render_template, url_for
-import boto3, io, os, smtplib
+import boto3, io, os
+from PIL import Image
 
 def update_db_image_status(image, status):
     db_image = ImageModel.query.filter_by(id=image.id)
@@ -103,22 +104,57 @@ def update_S3_dataset(reviewed_images, config):
     
 
 def get_label_content(image):
-    # Get yolo label content
-    pass
+    metadata = image.image_metadata
+    image_width = metadata['image_width']  # Assuming the image width is stored in metadata
+    image_height = metadata['image_height']  # Assuming the image height is stored in metadata
+
+    detected_objects = metadata.get('detected_objects', [])
+    
+    label_content = []
+    
+    for obj in detected_objects:
+        class_index = obj['class_index']
+        box = obj['box']  # [xmin, ymin, xmax, ymax]
+        
+        # Calculate center, width, and height
+        xmin, ymin, xmax, ymax = box
+        x_center = (xmin + xmax) / 2 / image_width
+        y_center = (ymin + ymax) / 2 / image_height
+        width = (xmax - xmin) / image_width
+        height = (ymax - ymin) / image_height
+        
+        # Format the YOLO label string
+        label_content.append(f"{class_index} {x_center} {y_center} {width} {height}")
+    
+    # Join the list into a string with newline characters
+    return "\n".join(label_content)
 
 
 def save_image_to_db(image_bytes, result, config):
-    image = ImageModel(metadata=result, new_images_path=config['S3_NEW_IMAGES_PATH'])
-    db.session.add(image)
+    # Open the image to get dimensions
+    image = Image.open(io.BytesIO(image_bytes)).convert('RGB')
+    image_width, image_height = image.size  # Get image width and height
+
+    # Add the image dimensions to the result (metadata)
+    result['image_width'] = image_width
+    result['image_height'] = image_height
+
+    # Create an ImageModel instance with the updated metadata
+    image_record = ImageModel(new_images_path=config['S3_NEW_IMAGES_PATH'], metadata=result)
+    db.session.add(image_record)
     db.session.commit()
     
-    # Generate yolo label file
-    label_content = get_label_content(image)
+    # Generate YOLO label file content
+    label_content = get_label_content(image_record)
     
     # Store the image and label to S3 bucket
     s3 = boto3.client('s3', region_name=config['AWS_REGION'])
-    s3.upload_fileobj(io.BytesIO(image_bytes), config['S3_BUCKET'], image.s3_key)
-    s3.upload_fileObj(label_content, config['S3_BUCKET'], image.label_s3_key)
+    s3.upload_fileobj(io.BytesIO(image_bytes), config['S3_BUCKET'], image_record.s3_key)
+    
+    # For the label, convert the label content to bytes and upload to S3
+    label_content_bytes = io.BytesIO(label_content.encode('utf-8'))
+    s3.upload_fileobj(label_content_bytes, config['S3_BUCKET'], image_record.label_s3_key)
+
     
 def send_invite_email(email, token):
     subject = "You're Invited to Join the Reviewer Platform"

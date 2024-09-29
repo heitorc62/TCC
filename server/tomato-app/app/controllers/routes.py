@@ -152,10 +152,8 @@ def process_image():
     image_file = request.files['image']
     image_bytes = image_file.read()
     image = Image.open(io.BytesIO(image_bytes)).convert('RGB')
-
-    ml_config = current_app.config['ML_CONFIG']
     
-    result = process_ml_pipeline(image, current_app.models, ml_config, current_app.device)
-    save_image_to_db(image_bytes, result)
+    result = process_ml_pipeline(image, current_app.models, current_app.config, current_app.device)
+    save_image_to_db(image_bytes, result, current_app.config)
 
     return jsonify(result)
