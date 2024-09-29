@@ -1,8 +1,9 @@
 from app.models.models import ImageModel, ImageStatus
-from app import db, mail
-from flask_mail import Message
+from app import db
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
 from flask import current_app, render_template, url_for
-import boto3, io, os
+import boto3, io, os, smtplib
 
 def update_db_image_status(image, status):
     db_image = ImageModel.query.filter_by(id=image.id)
@@ -121,14 +122,26 @@ def save_image_to_db(image_bytes, result, config):
     
 def send_invite_email(email, token):
     subject = "You're Invited to Join the Reviewer Platform"
-    recipient = [email]
+    recipient = email
     sender = current_app.config['MAIL_DEFAULT_SENDER']
     
     # Construct the registration URL
-    registration_url = url_for('routes.register_reviewer', token=token, _external=True)
+    registration_url = url_for('Routes.register_reviewer', token=token, _external=True)
     
     # Render email template
     html_body = render_template('email_invite.html', registration_url=registration_url)
     
-    msg = Message(subject=subject, recipients=recipient, sender=sender, html=html_body)
-    mail.send(msg)
+    # Create the message
+    message = Mail(
+        from_email=sender,
+        to_emails=recipient,
+        subject=subject,
+        html_content=html_body)
+    
+    try:
+        sg = SendGridAPIClient(os.environ.get('SENDGRID_API_KEY'))
+        sg.send(message)
+        return True
+    except Exception as e:
+        print(e.message)
+        return False

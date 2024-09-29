@@ -5,7 +5,6 @@ from PIL import Image
 from app.models import ImageModel, ImageStatus, ReviewerModel, InvitationModel, AdminModel, \
                         process_ml_pipeline, save_image_to_db, send_invite_email, \
                         update_S3_dataset
-from werkzeug.security import generate_password_hash, check_password_hash
 from passlib.hash import pbkdf2_sha256
 from flask_jwt_extended import create_access_token, jwt_required
 from datetime import timedelta
@@ -26,18 +25,29 @@ def update_dataset():
 @blp.route('/invite_reviewer', methods=['POST'])
 @jwt_required()
 def invite_reviewer():
-    email = request.form['email']
+    request_data = request.get_json()
+    email = request_data.get('email')
+    print("Vamos enviar o email para: ", email)
     token = secrets.token_urlsafe(32)  # Generate a unique token
     
-    # Store the invitation in the database
-    invite = InvitationModel(email=email, token=token)
-    db.session.add(invite)
-    db.session.commit()
+    # Check if the invitation already exists
+    existing_invite = InvitationModel.query.filter_by(email=email).first()
+    if existing_invite:
+        return jsonify({'message': 'An invitation for this email already exists.'}), 409
 
     # Send the invite via email (assume you have email setup)
-    send_invite_email(email, token)  # Placeholder for email sending logic
-    return jsonify({'message': 'Invitation sent successfully'})
+    try:
+        if send_invite_email(email, token): print("Email sent successfully.")
+        else: raise Exception("Failed to send email")
+        # Store the invitation in the database after the email is sent
+        invite = InvitationModel(email=email, token=token)
+        db.session.add(invite)
+        db.session.commit()
 
+        return jsonify({'message': 'Invitation sent and stored successfully'}), 201
+    except Exception as e:
+        print(f"Error sending email: {str(e)}")
+        return jsonify({'message': 'Failed to send invitation email'}), 500
 
 @blp.route('/register_reviewer/<token>', methods=['GET', 'POST'])
 def register_reviewer(token):
@@ -45,7 +55,7 @@ def register_reviewer(token):
     invite = InvitationModel.query.filter_by(token=token, is_used=False).first()
     if not invite:
         flash('Invalid or expired invite token', 'danger')
-        return redirect(url_for('routes.login'))
+        return redirect(url_for('Routes.login'))
 
     if request.method == 'POST':
         # Process the registration
@@ -53,7 +63,7 @@ def register_reviewer(token):
         password = request.form['password']
         
         # Hash the password before storing it
-        hashed_password = generate_password_hash(password)
+        hashed_password = pbkdf2_sha256.hash(password)
 
         # Create the reviewer user
         reviewer = ReviewerModel(username=username, password=hashed_password)
@@ -64,7 +74,7 @@ def register_reviewer(token):
         db.session.commit()
 
         flash('Reviewer registered successfully', 'success')
-        return redirect(url_for('routes.login'))
+        return redirect(url_for('Routes.login'))
 
     # Render registration form
     return render_template('register_reviewer.html', token=token)
@@ -92,7 +102,7 @@ def register_admin():
     request_data = request.get_json()
     username = request_data.get('username')
     password = request_data.get('password')
-    if AdminModel.query.filter(AdminModel.email == username).first():
+    if AdminModel.query.filter(AdminModel.username == username).first():
         abort(409, message="An admin with that user already exists.")
 
     admin = AdminModel(
@@ -116,13 +126,13 @@ def login():
         reviewer = ReviewerModel.query.filter_by(username=username).first()
 
         # Check if the user exists and if the password is correct
-        if reviewer is None or not check_password_hash(reviewer.password, password):
+        if reviewer is None or not pbkdf2_sha256.verify(password, reviewer.password):
             flash('Invalid username or password', 'danger')
             return redirect(url_for('login'))
 
         # On successful login, redirect to the labelling tool page
         flash('Login successful', 'success')
-        return redirect(url_for('labelling_tool'))
+        return redirect(url_for('Routes.labelling_tool'))
 
     # For GET request, render the login form
     return render_template('login.html')

@@ -9,3 +9,5 @@ Detector/data/plantdoc-DatasetNinja/
 server/.venv
 
 *.pyc
+
+server/.env

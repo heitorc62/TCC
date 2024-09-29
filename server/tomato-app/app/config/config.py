@@ -11,6 +11,10 @@ class Config:
     S3_DATASET_PATH = os.environ.get('S3_DATASET_PATH')
     TRAIN_PERCENTAGE = os.environ.get('TRAIN_PERCENTAGE')
     
+    SENDGRID_API_KEY=os.environ.get('SENDGRID_API_KEY')
+    MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER')
+    
+    
     @staticmethod
     def init_app(app):
         # Load additional config from JSON file using from_json

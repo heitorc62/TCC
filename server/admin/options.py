@@ -6,6 +6,19 @@ BASE_URL = "http://localhost:5000"
 # Store JWT token globally after login
 jwt_token = None
 
+def register_admin():
+    """Registers a new admin user."""
+    username = input("Enter admin username: ")
+    password = input("Enter admin password: ")
+
+    # Send a POST request to the /admin_register endpoint
+    response = requests.post(f"{BASE_URL}/register_admin", json={"username": username, "password": password})
+
+    if response.status_code == 201:
+        print("Admin user registered successfully.")
+    else:
+        print(f"Failed to register admin user. Status Code: {response.status_code}, Message: {response.json().get('msg')}")
+
 def get_auth_headers():
     """Returns the authorization headers with JWT token."""
     global jwt_token
@@ -24,7 +37,7 @@ def login_admin():
     password = input("Enter admin password: ")
 
     # Send a POST request to the /admin_login endpoint to get the JWT
-    response = requests.post(f"{BASE_URL}/admin_login", data={"username": username, "password": password})
+    response = requests.post(f"{BASE_URL}/admin_login", json={"username": username, "password": password})
 
     if response.status_code == 200:
         jwt_token = response.json().get('access_token')
@@ -41,9 +54,9 @@ def send_invitation():
     email = input("Enter the reviewer's email address: ")
 
     # Send a POST request to the /invite_reviewer endpoint
-    response = requests.post(f"{BASE_URL}/invite_reviewer", headers=get_auth_headers(), data={"email": email})
+    response = requests.post(f"{BASE_URL}/invite_reviewer", headers=get_auth_headers(), json={"email": email})
 
-    if response.status_code == 200:
+    if response.status_code == 201:
         print(f"Invitation sent to {email}.")
     else:
         print(f"Failed to send invitation. Status Code: {response.status_code}, Message: {response.json().get('msg')}")

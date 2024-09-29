@@ -42,7 +42,7 @@ class ReviewerModel(db.Model):
     __tablename__ = "reviewers"
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), nullable=False)
-    password = db.Column(db.String(80), nullable=False)
+    password = db.Column(db.String(255), nullable=False)
     
 class AdminModel(db.Model):
     __tablename__ = 'admins'

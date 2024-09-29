@@ -9,7 +9,7 @@ torchvision
 Flask-SQLAlchemy
 Flask-Migrate
 boto3
-Flask-Mail
+sendgrid
 psycopg2-binary
 Flask-Cors
 Flask-JWT-Extended

@@ -9,6 +9,8 @@ services:
       - S3_BUCKET=${S3_BUCKET}
       - S3_DATASET_PATH=${S3_DATASET_PATH}
       - S3_NEW_IMAGES_PATH=${S3_NEW_IMAGES_PATH}
+      - MAIL_DEFAULT_SENDER=${MAIL_DEFAULT_SENDER}
+      - SENDGRID_API_KEY=${SENDGRID_API_KEY}
     ports:
       - "5000:5000"
     volumes:
