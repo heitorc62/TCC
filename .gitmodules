@@ -1,3 +1,6 @@
 [submodule "plantvillage_deeplearning_paper_analysis"]
 	path = plantvillage_deeplearning_paper_analysis
 	url = git@github.com:pedrolucasrsc/plantvillage_deeplearning_paper_analysis.git
+[submodule "tomato-health-front"]
+	path = tomato-health-front
+	url = git@github.com:pedrolucasrsc/tomato-health-front.git
