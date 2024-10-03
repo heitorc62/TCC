@@ -11,6 +11,8 @@ services:
       - S3_NEW_IMAGES_PATH=${S3_NEW_IMAGES_PATH}
       - MAIL_DEFAULT_SENDER=${MAIL_DEFAULT_SENDER}
       - SENDGRID_API_KEY=${SENDGRID_API_KEY}
+      - LABEL_STUDIO_URL=${LABEL_STUDIO_URL}
+      - LABEL_STUDIO_API_KEY=${LABEL_STUDIO_API_KEY}
     ports:
       - "5000:5000"
     volumes:
@@ -23,6 +25,9 @@ services:
         limits:
           cpus: '0.50'
           memory: '512M'
+    depends_on:
+      - label-studio
+      - postgres
 
   pgadmin:
     image: dpage/pgadmin4
@@ -59,17 +64,18 @@ services:
           cpus: '0.50'
           memory: '512M'
 
-  label_studio:
+  label-studio:
     image: heartexlabs/label-studio:latest
+    networks:
+      - mynetwork
     ports:
       - "8080:8080"
     environment:
       - LABEL_STUDIO_USERNAME=${LABEL_STUDIO_USERNAME}
       - LABEL_STUDIO_PASSWORD=${LABEL_STUDIO_PASSWORD}
+      - ALLOWED_HOSTS=label-studio,localhost,127.0.0.1
     volumes:
       - label_studio_data:/label-studio/data
-    depends_on:
-      - web
 
 
 networks:

@@ -14,3 +14,4 @@ psycopg2-binary
 Flask-Cors
 Flask-JWT-Extended
 passlib
+label-studio-sdk

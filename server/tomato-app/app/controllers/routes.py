@@ -4,7 +4,7 @@ from app import db
 from PIL import Image
 from app.models import ImageModel, ImageStatus, ReviewerModel, InvitationModel, AdminModel, \
                         process_ml_pipeline, save_image_to_db, send_invite_email, \
-                        update_S3_dataset
+                        update_S3_dataset, create_task_in_label_studio, generate_presigned_url
 from passlib.hash import pbkdf2_sha256
 from flask_jwt_extended import create_access_token, jwt_required
 from datetime import timedelta
@@ -138,12 +138,6 @@ def login():
     return render_template('login.html')
 
 
-
-@blp.route('/labelling_tool')
-def labelling_tool():
-    return "Welcome to the labelling tool"
-
-
 @blp.route('/process_image', methods=['POST'])
 def process_image():
     if 'image' not in request.files:
@@ -157,3 +151,40 @@ def process_image():
     save_image_to_db(image_bytes, result, current_app.config)
 
     return jsonify(result)
+
+@blp.route('/labelling_tool')
+def labelling_tool():
+    # Step 1: Query an unreviewed image from the database
+    unreviewed_image = db.session.query(ImageModel).filter_by(status=ImageStatus.PENDING).first()
+    if not unreviewed_image:
+        return "No unreviewed images available", 404
+    # Step 2: Create a task in Label Studio for the unreviewed image
+    presigned_url = generate_presigned_url(current_app.config["S3_BUCKET"], unreviewed_image.s3_key)
+    print(f"presigned_url={presigned_url}")
+    task_id = create_task_in_label_studio(presigned_url, unreviewed_image.image_metadata, current_app.LABEL_STUDIO_PROJECT_ID)
+    # Step 3: Redirect the user to the Label Studio task page
+    label_studio_task_url = f"http://localhost:8080/projects/{current_app.LABEL_STUDIO_PROJECT_ID}/data?tab=2&task={task_id}"
+    return redirect(label_studio_task_url)
+
+@blp.route('/labelling_tool/webhook', methods=['POST'])
+def labelling_callback():
+    label_data = request.json
+    # Extract the relevant information from the payload
+    task_id = label_data['id']
+    project_id = label_data['project']
+    action = label_data['action']
+    
+    if action in ["ANNOTATION_CREATED", "ANNOTATION_UPDATED"]:
+        # Get the task information (such as image URL) from the payload
+        task_data = label_data['data']  # This will contain your image data
+        annotations = label_data['annotations'][0]['result']  # Extract labels
+        # Step 1: Update the image metadata in the database
+        # Save the labels to your DB
+        # Mark the image as reviewed
+        # Step 2: Update the image's YOLO label in S3
+        # Step 3: Start a new review by selecting another unreviewed image
+        new_image = db.session.query(ImageModel).filter_by(reviewed=False).first()
+        if new_image:
+            create_task_in_label_studio(new_image.url, project_id)  # Create a new task in Label Studio
+
+    return jsonify({'status': 'success'}), 200
