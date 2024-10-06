@@ -61,7 +61,7 @@ def update_S3_dataset(reviewed_images, config):
     training_split = config['TRAIN_PERCENTAGE']
     region = config['AWS_REGION']
     
-    s3 = boto3.client('s3', region=region)
+    s3 = boto3.client('s3', region_name=region)
     
     # Split reviewed images into training and validation sets
     total_images = len(reviewed_images)
@@ -104,8 +104,7 @@ def update_S3_dataset(reviewed_images, config):
     return result
     
 
-def get_label_content(image):
-    metadata = image.image_metadata
+def get_label_content(metadata):
     image_width = metadata['image_width']  # Assuming the image width is stored in metadata
     image_height = metadata['image_height']  # Assuming the image height is stored in metadata
 
@@ -146,7 +145,7 @@ def save_image_to_db(image_bytes, result, config):
     db.session.commit()
     
     # Generate YOLO label file content
-    label_content = get_label_content(image_record)
+    label_content = get_label_content(image_record.image_metadata)
     
     # Store the image and label to S3 bucket
     s3 = boto3.client('s3', region_name=config['AWS_REGION'])
@@ -193,10 +192,11 @@ def generate_annotations(label_info):
     Returns:
         list: A list of annotation results to be included in the task.
     """
-    detected_objects = label_info['detected_objects']
+    results = []
+    detected_objects = label_info.get('detected_objects', None)
+    if detected_objects is None: return results
     image_width = label_info['image_width']
     image_height = label_info['image_height']
-    results = []
 
     for obj in detected_objects:
         box = obj['box']
@@ -267,7 +267,7 @@ def retrieve_task_id(image_url, project_id):
         print(f"An error occurred: {e}")
         return None
 
-def create_task_in_label_studio(image_url, label_info, project_id):
+def create_task_in_label_studio(image_url, label_info, project_id, image_id=None):
     """
     Creates a task in Label Studio with the given annotations by making an API call.
     
@@ -289,7 +289,8 @@ def create_task_in_label_studio(image_url, label_info, project_id):
     # Prepare the task data
     task_data = {
         "data": {
-            "image": image_url
+            "image": image_url,
+            "image_id": image_id
         },
         "annotations": [
             {
@@ -360,3 +361,50 @@ def generate_presigned_url(bucket_name, object_key, expiration=3600):
 
     # The response contains the presigned URL
     return response
+
+def generate_image_metadata(annotations):
+    # Initialize the image metadata dictionary
+    image_metadata = {'detected_objects': []}
+    original_width = 0
+    original_height = 0
+    # Iterate through each annotation to convert and add to the metadata
+    for annotation in annotations:
+        # Extract the original image dimensions
+        original_width = annotation['original_width']
+        original_height = annotation['original_height']
+        
+        # Extract bounding box details from annotation
+        x = annotation['value']['x'] / 100.0 * original_width
+        y = annotation['value']['y'] / 100.0 * original_height
+        width = annotation['value']['width'] / 100.0 * original_width
+        height = annotation['value']['height'] / 100.0 * original_height
+        
+        # Create the bounding box in the format [x1, y1, x2, y2]
+        box = [x, y, x + width, y + height]
+
+        # Extract other details like class name and score
+        class_name = annotation['value']['rectanglelabels'][0]  # Assumes one label per annotation
+        score = annotation.get('score', None)  # Get the score if it exists
+        
+        # Add to the detected_objects list in the desired format
+        image_metadata['detected_objects'].append({
+            'box': box,
+            'class_index': '5',  # Based on your example, class index for 'Tomato leaf yellow virus'
+            'class_name': class_name,
+            'score': score
+        })
+    
+    image_metadata['image_width'] = original_width
+    image_metadata['image_height'] = original_height
+    
+    return image_metadata
+    
+def update_s3_label(label_s3_key, metadata):
+    # Update YOLO label file content
+    try:
+        s3 = boto3.client('s3', region_name=current_app.config['AWS_REGION'])
+        label_content = get_label_content(metadata)
+        label_content_bytes = io.BytesIO(label_content.encode('utf-8'))
+        s3.upload_fileobj(label_content_bytes, current_app.config['S3_BUCKET'], label_s3_key)
+    except Exception as e:
+        print(f"Error updating label in S3: {e}")

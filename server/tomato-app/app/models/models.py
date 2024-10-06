@@ -59,3 +59,13 @@ class InvitationModel(db.Model):
     token = db.Column(db.String(64), unique=True, nullable=False)
     is_used = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    
+class TaskStatus(enum.Enum):
+    PENDING = 0
+    COMPLETED = 1
+class TaskStatusModel(db.Model):
+    __tablename__ = 'task_status'
+    id = db.Column(db.Integer, primary_key=True)
+    task_id = db.Column(db.Integer, nullable=False)
+    status = db.Column(db.Enum(TaskStatus), nullable=False, default=TaskStatus.PENDING)

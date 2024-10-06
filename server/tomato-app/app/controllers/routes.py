@@ -1,15 +1,16 @@
 from flask_smorest import Blueprint, abort
+from sqlalchemy import desc
 from flask import render_template, request, redirect, url_for, flash, jsonify, current_app
 from app import db
 from PIL import Image
-from app.models import ImageModel, ImageStatus, ReviewerModel, InvitationModel, AdminModel, \
-                        process_ml_pipeline, save_image_to_db, send_invite_email, \
-                        update_S3_dataset, create_task_in_label_studio, generate_presigned_url
+from app.models import ImageModel, ImageStatus, ReviewerModel, InvitationModel, AdminModel, TaskStatusModel, \
+                        TaskStatus, process_ml_pipeline, save_image_to_db, send_invite_email, \
+                        update_S3_dataset, create_task_in_label_studio, generate_presigned_url, \
+                        generate_image_metadata, update_s3_label
 from passlib.hash import pbkdf2_sha256
 from flask_jwt_extended import create_access_token, jwt_required
 from datetime import timedelta
 import io, secrets
-
 
 blp = Blueprint("Routes", "routes", description="Routes for the application")
 
@@ -132,6 +133,7 @@ def login():
 
         # On successful login, redirect to the labelling tool page
         flash('Login successful', 'success')
+        # use flask login to log the user in
         return redirect(url_for('Routes.labelling_tool'))
 
     # For GET request, render the login form
@@ -152,39 +154,98 @@ def process_image():
 
     return jsonify(result)
 
+#require flask login
 @blp.route('/labelling_tool')
 def labelling_tool():
     # Step 1: Query an unreviewed image from the database
     unreviewed_image = db.session.query(ImageModel).filter_by(status=ImageStatus.PENDING).first()
     if not unreviewed_image:
-        return "No unreviewed images available", 404
+        return redirect(url_for('Routes.no_images'))
     # Step 2: Create a task in Label Studio for the unreviewed image
     presigned_url = generate_presigned_url(current_app.config["S3_BUCKET"], unreviewed_image.s3_key)
-    print(f"presigned_url={presigned_url}")
-    task_id = create_task_in_label_studio(presigned_url, unreviewed_image.image_metadata, current_app.LABEL_STUDIO_PROJECT_ID)
+    task_id = create_task_in_label_studio(presigned_url, unreviewed_image.image_metadata, current_app.LABEL_STUDIO_PROJECT_ID, image_id=unreviewed_image.id)
     # Step 3: Redirect the user to the Label Studio task page
+    task_status = TaskStatusModel(task_id=task_id)
+    db.session.add(task_status)
+    db.session.commit()
     label_studio_task_url = f"http://localhost:8080/projects/{current_app.LABEL_STUDIO_PROJECT_ID}/data?tab=2&task={task_id}"
     return redirect(label_studio_task_url)
+
+def mark_task_as_completed(task_id):
+    task_status = TaskStatusModel.query.filter_by(task_id=task_id).order_by(desc(TaskStatusModel.id)).first()
+    task_status.status = TaskStatus.COMPLETED
+    db.session.commit()
 
 @blp.route('/labelling_tool/webhook', methods=['POST'])
 def labelling_callback():
     label_data = request.json
     # Extract the relevant information from the payload
-    task_id = label_data['id']
-    project_id = label_data['project']
     action = label_data['action']
-    
     if action in ["ANNOTATION_CREATED", "ANNOTATION_UPDATED"]:
-        # Get the task information (such as image URL) from the payload
-        task_data = label_data['data']  # This will contain your image data
-        annotations = label_data['annotations'][0]['result']  # Extract labels
         # Step 1: Update the image metadata in the database
+        annotations = label_data['annotation']['result']
+        task_data = label_data['task']['data']
+        image_id = task_data['image_id']
+        current_task_id = label_data['task']['id']
+        
         # Save the labels to your DB
+        image = db.session.query(ImageModel).filter_by(id=image_id).first()
+        metadata = generate_image_metadata(annotations)
+        image.image_metadata = metadata
+        
         # Mark the image as reviewed
+        image.status = ImageStatus.REVIEWED
+        db.session.commit()
+        
         # Step 2: Update the image's YOLO label in S3
+        update_s3_label(image.label_s3_key, metadata)
+        
         # Step 3: Start a new review by selecting another unreviewed image
-        new_image = db.session.query(ImageModel).filter_by(reviewed=False).first()
+        new_image = db.session.query(ImageModel).filter_by(status=ImageStatus.PENDING).first()
         if new_image:
-            create_task_in_label_studio(new_image.url, project_id)  # Create a new task in Label Studio
+            # Create a new task in Label Studio for the new image
+            print(f"Starting a new review for image {new_image.id}")
+            presigned_url = generate_presigned_url(current_app.config["S3_BUCKET"], new_image.s3_key)
+            new_task_id = create_task_in_label_studio(presigned_url, new_image.image_metadata, current_app.LABEL_STUDIO_PROJECT_ID, image_id=new_image.id)
+            print(f"New task created with ID {new_task_id}")
+            new_task_status = TaskStatusModel(task_id=new_task_id)
+            db.session.add(new_task_status)
+            
+            # Mark the current task as completed
+            mark_task_as_completed(current_task_id)
+            
+            return jsonify({'message': 'Review completed successfully. Starting a new review.'}), 200
+        else:
+            print("No more images to review")
+            
+            # Mark the current task as completed
+            mark_task_as_completed(current_task_id)
+            
+            return jsonify({'message': 'Review completed successfully. No more images to review.'}), 200
+    else:
+        return jsonify({'message': 'No action required'}), 200
+    
+    
 
-    return jsonify({'status': 'success'}), 200
+@blp.route('/task_status/<task_id>', methods=['GET'])
+def get_task_status(task_id):
+    task_status = TaskStatusModel.query.filter_by(task_id=task_id).order_by(desc(TaskStatusModel.id)).first().status.name
+    next_task = TaskStatusModel.query.filter_by(status=TaskStatus.PENDING).first()
+    if next_task:
+        next_task_id = next_task.task_id
+        label_studio_task_url = f"http://localhost:8080/projects/{current_app.LABEL_STUDIO_PROJECT_ID}/data?tab=2&task={next_task_id}"
+        response_data = {"task_status": task_status, "next_task": label_studio_task_url}
+    else:
+        response_data = {"task_status": task_status, "next_task": f"http://localhost:5000{url_for('Routes.no_images')}"}
+        
+    response = jsonify(response_data)
+    # Add CORS headers
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    return response
+
+
+@blp.route('/no_images')
+def no_images():
+    return '''
+    <h1>No more images to review! Please come back later.</h1>
+    '''

@@ -1,6 +1,6 @@
 version: "3"
 services:
-  web:
+  flask-app:
     build: ./tomato-app
     environment:
       - SECRET=${SECRET}
@@ -65,7 +65,7 @@ services:
           memory: '512M'
 
   label-studio:
-    image: heartexlabs/label-studio:latest
+    build: ./label-studio
     networks:
       - mynetwork
     ports:

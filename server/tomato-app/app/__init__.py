@@ -1,4 +1,4 @@
-import torch, requests, time, json, httpx
+import torch, socket, httpx
 from flask_sqlalchemy import SQLAlchemy
 from flask import Flask, current_app
 from flask_migrate import Migrate
@@ -66,15 +66,18 @@ def create_project_if_not_exists(project_title='Image Review Project', client=No
         description='Tomato leaf disease detection project',
         label_config=label_config,
         expert_instruction='Please label the type of tomato leaf disease in the image',
-    )
-    
-    print(f"Project created successfully: {project}")
-    
-    client.webhooks.create(request=Webhook(url="http://web:5000/labelling_tool/webhook", project=project.id))
-    
+    )    
     return project.id
 
 
+def update_webhook(client, project_id):
+    webhook_list= client.webhooks.list(project=project_id)
+    if len(webhook_list) > 0:
+        webhook_id = webhook_list[0].id
+        client.webhooks.delete(id=webhook_id)
+    
+    client.webhooks.create(request=Webhook(url=f"http://{socket.gethostbyname(socket.gethostname())}:5000/labelling_tool/webhook", project=project_id))
+    
 
 def create_app(config='app.config.config.Config'):
     app = Flask(__name__, template_folder='view')
@@ -94,6 +97,7 @@ def create_app(config='app.config.config.Config'):
         try:
             app.label_studio_client = get_label_studio_client()
             app.LABEL_STUDIO_PROJECT_ID = create_project_if_not_exists('Image Review Project', app.label_studio_client)
+            update_webhook(app.label_studio_client, app.LABEL_STUDIO_PROJECT_ID)
         except Exception as e:
             raise RuntimeError(f"Error during Label Studio project creation: {str(e)}")
     
