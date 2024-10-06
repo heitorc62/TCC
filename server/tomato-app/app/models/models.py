@@ -2,6 +2,7 @@ from app import db
 from sqlalchemy import Enum
 from datetime import datetime
 import enum
+from flask_login import UserMixin
 
 class ImageStatus(enum.Enum):
     PENDING = 0
@@ -39,7 +40,7 @@ class ImageModel(db.Model):
         return f'{self.new_images_path}/labels/uploaded_image_{self.last_id}.txt'
     
     
-class ReviewerModel(db.Model):
+class ReviewerModel(db.Model, UserMixin):
     __tablename__ = "reviewers"
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), nullable=False)

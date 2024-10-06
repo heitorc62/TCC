@@ -6,11 +6,12 @@ from PIL import Image
 from app.models import ImageModel, ImageStatus, ReviewerModel, InvitationModel, AdminModel, TaskStatusModel, \
                         TaskStatus, process_ml_pipeline, save_image_to_db, send_invite_email, \
                         update_S3_dataset, create_task_in_label_studio, generate_presigned_url, \
-                        generate_image_metadata, update_s3_label
+                        generate_image_metadata, update_s3_label, query_llm, create_llm_prompt
 from passlib.hash import pbkdf2_sha256
 from flask_jwt_extended import create_access_token, jwt_required
 from datetime import timedelta
 import io, secrets
+from flask_login import login_user, login_required
 
 blp = Blueprint("Routes", "routes", description="Routes for the application")
 
@@ -131,6 +132,8 @@ def login():
             flash('Invalid username or password', 'danger')
             return redirect(url_for('login'))
 
+        # Log the user in
+        login_user(reviewer)
         # On successful login, redirect to the labelling tool page
         flash('Login successful', 'success')
         # use flask login to log the user in
@@ -151,11 +154,21 @@ def process_image():
     
     result = process_ml_pipeline(image, current_app.models, current_app.config, current_app.device)
     save_image_to_db(image_bytes, result, current_app.config)
+    
+    # Extract relevant data for LLM prompt
+    prompt = create_llm_prompt(result)
+    
+    # Generate response from LLM
+    llm_response = query_llm(prompt)
 
-    return jsonify(result)
+    return jsonify({
+        "ml_result": result,
+        "llm_response": llm_response
+    })
 
 #require flask login
 @blp.route('/labelling_tool')
+@login_required
 def labelling_tool():
     # Step 1: Query an unreviewed image from the database
     unreviewed_image = db.session.query(ImageModel).filter_by(status=ImageStatus.PENDING).first()

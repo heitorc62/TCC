@@ -15,3 +15,5 @@ Flask-Cors
 Flask-JWT-Extended
 passlib
 label-studio-sdk
+openai
+flask-login

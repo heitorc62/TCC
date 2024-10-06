@@ -12,6 +12,7 @@ class Config:
     TRAIN_PERCENTAGE = os.environ.get('TRAIN_PERCENTAGE')
     LABEL_STUDIO_URL = os.environ.get('LABEL_STUDIO_URL')
     LABEL_STUDIO_API_KEY = os.environ.get('LABEL_STUDIO_API_KEY')
+    OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
     
     SENDGRID_API_KEY=os.environ.get('SENDGRID_API_KEY')
     MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER')

@@ -6,6 +6,8 @@ from flask import current_app, render_template, url_for, abort
 import boto3, io, os, requests, json
 from datetime import datetime
 from PIL import Image
+from openai import OpenAI
+import openai
 
 def update_db_image_status(image, status):
     db_image = ImageModel.query.filter_by(id=image.id)
@@ -408,3 +410,61 @@ def update_s3_label(label_s3_key, metadata):
         s3.upload_fileobj(label_content_bytes, current_app.config['S3_BUCKET'], label_s3_key)
     except Exception as e:
         print(f"Error updating label in S3: {e}")
+        
+
+def create_llm_prompt(result):
+    detected_objects = result.get('detected_objects', [])
+    
+    if not detected_objects:
+        return "No objects detected in the image."
+
+    image_width = result['image_width']
+    image_height = result['image_height']
+
+    prompt = (
+        f"The image of size {image_width}x{image_height} pixels contains the following detected diseases:\n"
+    )
+
+    for idx, obj in enumerate(detected_objects):
+        class_name = obj['class_name']
+        score = obj['score']
+        box = obj['box']
+        x1, y1, x2, y2 = box
+
+        location = f"from ({x1}, {y1}) to ({x2}, {y2})"
+        prompt += (
+            f"{idx + 1}. Disease: {class_name}\n"
+            f"   Confidence: {score:.2f}\n"
+            f"   Location: {location}\n\n"
+        )
+    
+    # Add a request for advice at the end of the prompt
+    prompt += (
+        "Please provide advice on how to manage or treat the detected diseases and suggestions for improving the growth "
+        "and health of the tomato plant overall."
+    )
+    
+    return prompt
+
+
+
+def query_llm(prompt):
+    if prompt == "No objects detected in the image.":
+        return "Our model did not detect any relevant information about tomatoes in the image. Have in mind that this is an app in development and we are constantly improving our models."
+    try:
+        # Access OpenAI API
+        response = current_app.openai_client.chat.completions.create(
+            model="gpt-4o-mini",  # You can use "gpt-4" or "gpt-3.5-turbo"
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "user", "content": prompt}
+            ],
+            max_tokens=200,  # Adjust response length as needed
+            temperature=0.7  # Adjust creativity level
+        )
+        print(response.choices[0].message.content)
+        # Extract the model's response
+        return response.choices[0].message.content
+    
+    except Exception as e:
+        return f"Error querying LLM: {str(e)}"

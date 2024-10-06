@@ -1,4 +1,5 @@
 import torch, socket, httpx
+from openai import OpenAI
 from flask_sqlalchemy import SQLAlchemy
 from flask import Flask, current_app
 from flask_migrate import Migrate
@@ -6,6 +7,7 @@ from app.config.config import Config
 from flask_jwt_extended import JWTManager
 from label_studio_sdk.client import LabelStudio
 from label_studio_sdk import Webhook
+from flask_login import LoginManager
 
 db = SQLAlchemy()
 migrate = Migrate()
@@ -87,11 +89,27 @@ def create_app(config='app.config.config.Config'):
     migrate.init_app(app, db)
     jwt.init_app(app)
     
+    # Initialize Flask-Login
+    login_manager = LoginManager()
+    login_manager.init_app(app)
+    login_manager.login_view = 'Routes.login'  # Redirect here if not logged in
+
+    # Load user callback for Flask-Login
+    from app.models import ReviewerModel
+
+    @login_manager.user_loader
+    def load_user(user_id):
+        return ReviewerModel.query.get(int(user_id))
+    
+    
     from app.models import load_models
     # Load the device and models after the app is configured
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     app.device = device
     app.models = load_models(app.config, device)
+    
+    # Initialize OpenAI API key
+    app.openai_client = OpenAI()
     
     with app.app_context():
         try:
