@@ -107,3 +107,9 @@ def process_ml_pipeline(image, models, config, device):
 
     return result
 
+
+def load_new_weights(local_weights_path):
+    model = YOLO(local_weights_path)  # YOLO handles reloading internally
+    print(f"New YOLOv8 weights loaded from: {local_weights_path}")
+    return model
+

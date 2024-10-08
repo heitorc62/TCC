@@ -6,11 +6,11 @@ from PIL import Image
 from app.models import ImageModel, ImageStatus, ReviewerModel, InvitationModel, AdminModel, TaskStatusModel, \
                         TaskStatus, process_ml_pipeline, save_image_to_db, send_invite_email, \
                         update_S3_dataset, create_task_in_label_studio, generate_presigned_url, \
-                        generate_image_metadata, update_s3_label, query_llm, create_llm_prompt
+                        generate_image_metadata, update_s3_label, query_llm, create_llm_prompt, load_new_weights
 from passlib.hash import pbkdf2_sha256
 from flask_jwt_extended import create_access_token, jwt_required
 from datetime import timedelta
-import io, secrets
+import io, secrets, boto3
 from flask_login import login_user, login_required
 
 blp = Blueprint("Routes", "routes", description="Routes for the application")
@@ -22,6 +22,38 @@ def update_dataset():
     reviewed_images = ImageModel.query.filter_by(status=ImageStatus.REVIEWED).all()
     result = update_S3_dataset(reviewed_images)
     return jsonify(result)
+
+
+@blp.route('/update_weights', methods=['POST'])
+@jwt_required()
+def update_weights():
+    try:
+        # Extract the weights URL and S3 key from the request
+        request_data = request.get_json()
+        weights_url = request_data.get('weights_url')
+        weights_key = request_data.get('weights_key')
+        
+        if not weights_url or not weights_key:
+            return jsonify({"error": "weights_url or weights_key is missing in the request."}), 400
+
+        # Download the new weights file from S3
+        s3 = boto3.client('s3')
+        s3_bucket = current_app.config["S3_BUCKET"]
+        local_weights_path = f"app/config/weights/{weights_key}"
+
+        # Download the file from S3 and save it locally
+        s3.download_file(s3_bucket, weights_key, local_weights_path)
+        print(f"New weights downloaded and saved at: {local_weights_path}")
+        
+        # Reload the model with the new weights
+        current_app.models = load_new_weights(local_weights_path)  # Custom function to load the new weights
+        print(f"Model reloaded with the new weights from {local_weights_path}")
+        
+        return jsonify({"message": "Weights updated and model reloaded successfully."}), 200
+    
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
 
 
 @blp.route('/invite_reviewer', methods=['POST'])

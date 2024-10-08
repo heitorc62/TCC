@@ -10,14 +10,36 @@ from botocore.exceptions import NoCredentialsError, ClientError
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Fetch the dataset from S3
-def fetch_dataset(s3_bucket, s3_key, save_path):
+def fetch_dataset(s3_bucket, s3_prefix, local_dir):
     s3 = boto3.client('s3')
     try:
-        logging.info(f"Downloading dataset from S3: s3://{s3_bucket}/{s3_key} to {save_path}")
-        s3.download_file(s3_bucket, s3_key, save_path)
-        logging.info(f"Dataset saved to {save_path}")
-    except FileNotFoundError:
-        logging.error(f"File {save_path} not found.")
+        # List objects in the bucket under the prefix (folder)
+        paginator = s3.get_paginator('list_objects_v2')
+        pages = paginator.paginate(Bucket=s3_bucket, Prefix=s3_prefix)
+
+        for page in pages:
+            if 'Contents' in page:
+                for obj in page['Contents']:
+                    # Extract the file's key and define the local file path
+                    s3_key = obj['Key']
+
+                    # Skip "folders" (i.e., keys ending with '/')
+                    if not s3_key.endswith('/'):
+                        # Derive the relative path in the local directory
+                        relative_path = os.path.relpath(s3_key, s3_prefix)
+                        local_file_path = os.path.join(local_dir, relative_path)
+
+                        # Ensure the local directory structure exists
+                        local_folder = os.path.dirname(local_file_path)
+                        if not os.path.exists(local_folder):
+                            os.makedirs(local_folder)
+
+                        logging.info(f"Downloading {s3_key} to {local_file_path}")
+                        s3.download_file(s3_bucket, s3_key, local_file_path)
+                        logging.info(f"File saved to {local_file_path}")
+
+    except FileNotFoundError as e:
+        logging.error(f"File not found: {e}")
         raise
     except NoCredentialsError:
         logging.error("S3 credentials not available.")
@@ -87,6 +109,17 @@ def update_current_performance_file(new_performance, current_performance_file):
     with open(current_performance_file, 'w') as f:
         f.write(str(new_performance))
 
+def create_presigned_url(bucket_name, object_name, expiration=3600):
+    s3 = boto3.client('s3')
+    try:
+        response = s3.generate_presigned_url('get_object', Params={'Bucket': bucket_name, 'Key': object_name}, ExpiresIn=expiration)
+        logging.info(f"Presigned URL generated for s3://{bucket_name}/{object_name}")
+        return response
+    except ClientError as e:
+        logging.error(f"Error generating presigned URL: {e}")
+        raise
+
+
 # Main function to coordinate the workflow
 def main():
     parser = argparse.ArgumentParser(description="Train YOLO model and manage weights.")
@@ -97,7 +130,7 @@ def main():
     parser.add_argument("--epochs", type=int, default=100, help="Number of training epochs")
     parser.add_argument("--data_yaml", type=str, required=True, help="YAML file for YOLO training configuration")
     parser.add_argument("--weights_output", type=str, default="./runs/train/weights/best.pt", help="Path to the output weights file")
-    parser.add_argument("--s3_output_bucket", type=str, required=True, help="S3 bucket to upload the trained weights")
+    parser.add_argument("--s3_weights_key", type=str, required=True, help="S3 bucket to upload the trained weights")
     parser.add_argument("--server_endpoint", type=str, required=True, help="Server endpoint to notify for weights update")
     parser.add_argument("--current_performance", type=float, default=0.85, help="Current model performance")
     parser.add_argument("--current_performance_file", type=str, default="../best_metrics.csv", help="File to store current performance")
@@ -115,9 +148,9 @@ def main():
     # Decide if we should update the weights
     if should_update_weights(parser.current_performance, new_performance):
         # Upload the new weights to S3
-        upload_to_s3(args.weights_output, args.s3_output_bucket)
+        upload_to_s3(args.weights_output, args.s3_bucket, args.s3_weights_key)
         # Call the server to update the weights
-        weights_url = f"s3://{args.s3_output_bucket}/{os.path.basename(args.weights_output)}"
+        weights_url = create_presigned_url(args.s3_bucket, args.s3_weights_key)
         call_server_to_update_weights(weights_url, args.server_endpoint)
         update_current_performance_file(new_performance, args.current_performance_file)
 
