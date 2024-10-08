@@ -82,6 +82,10 @@ def call_server_to_update_weights(weights_url, server_endpoint):
     except Exception as e:
         logging.error(f"Error while requesting server to update weights: {e}")
         raise
+    
+def update_current_performance_file(new_performance, current_performance_file):
+    with open(current_performance_file, 'w') as f:
+        f.write(str(new_performance))
 
 # Main function to coordinate the workflow
 def main():
@@ -96,6 +100,7 @@ def main():
     parser.add_argument("--s3_output_bucket", type=str, required=True, help="S3 bucket to upload the trained weights")
     parser.add_argument("--server_endpoint", type=str, required=True, help="Server endpoint to notify for weights update")
     parser.add_argument("--current_performance", type=float, default=0.85, help="Current model performance")
+    parser.add_argument("--current_performance_file", type=str, default="../best_metrics.csv", help="File to store current performance")
     
     args = parser.parse_args()
 
@@ -114,6 +119,7 @@ def main():
         # Call the server to update the weights
         weights_url = f"s3://{args.s3_output_bucket}/{os.path.basename(args.weights_output)}"
         call_server_to_update_weights(weights_url, args.server_endpoint)
+        update_current_performance_file(new_performance, args.current_performance_file)
 
 if __name__ == "__main__":
     main()
