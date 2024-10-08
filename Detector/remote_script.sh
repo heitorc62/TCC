@@ -47,7 +47,7 @@ echo "mAP50: $mAP50"
 # Step 3: Run the src/s3_dataset_train.py script with the dataset path
 echo "Running training script with dataset path: $DATASET_PATH"
 nohup python $TRAIN_SCRIPT \
-        --save_path .datasets/$DATASET_PATH \
+        --save_path $DATASET_PATH \
         --s3_bucket $S3_BUCKET \
         --s3_key $S3_KEY \
         --data_yaml $YAML_FILE \
