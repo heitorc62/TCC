@@ -6,7 +6,7 @@ set -e
 # Check if a dataset path is provided
 if [ -z "$1" ]; then
   echo "Error: No dataset path provided."
-  echo "Usage: ./run_training.sh <dataset_path>"
+  echo "Usage: ./remote_script.sh <dataset_path>"
   exit 1
 fi
 
@@ -14,6 +14,8 @@ DATASET_PATH=$1
 YAML_FILE="tomato.yaml"
 METRICS_FILE="best_metrics.csv"
 TRAIN_SCRIPT="src/s3_dataset_train.py"
+
+. .yolo_env/bin/activate
 
 # Step 1: Update the tomato.yaml file with the dataset path
 echo "Updating $YAML_FILE with dataset path: $DATASET_PATH"
