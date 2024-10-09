@@ -52,7 +52,7 @@ nohup python $TRAIN_SCRIPT \
         --s3_key $S3_KEY \
         --data_yaml $YAML_FILE \
         --s3_weights_key $S3_WEIGHTS_KEY \
-        --server_endpoint $SERVER_ENDPOINT \
+	--server_endpoint $SERVER_ENDPOINT \
         --current_performance $mAP50 > train.log 2>&1 &
 
 

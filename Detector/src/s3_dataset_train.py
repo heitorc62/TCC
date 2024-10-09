@@ -141,15 +141,14 @@ def main():
     args = parser.parse_args()
 
     # Fetch dataset from S3
-    fetch_dataset(args.s3_bucket, args.s3_key, args.save_path)
+    #fetch_dataset(args.s3_bucket, args.s3_key, args.save_path)
     
     # Train YOLO model
     results = train_yolo(data_yaml=args.data_yaml, epochs=args.epochs, img_size=args.img_size)
-    
-    new_performance = results["metrics"]["mAP_50"]  # Example metric from YOLO training results
+    new_performance = results.results_dict["metrics/mAP50(B)"]  # Example metric from YOLO training results
 
     # Decide if we should update the weights
-    if should_update_weights(parser.current_performance, new_performance):
+    if should_update_weights(args.current_performance, new_performance):
         # Upload the new weights to S3
         upload_to_s3(args.weights_output, args.s3_bucket, args.s3_weights_key)
         # Call the server to update the weights
