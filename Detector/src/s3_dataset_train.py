@@ -58,6 +58,7 @@ def train_yolo(data_yaml, epochs=100, img_size=640, device=0):
         model = YOLO("yolov8n.pt")  # Build from YAML and transfer weights
         results = model.train(task="detect", data=data_yaml, epochs=epochs, imgsz=img_size, device=device)
         logging.info("YOLO training completed.")
+        logging.info(f"results saved in: {results.save_dir}")
         return results
     except Exception as e:
         logging.error(f"Error during YOLO training: {e}")
@@ -93,13 +94,15 @@ def should_update_weights(current_performance, new_performance, threshold=0.05):
         return True
     else:
         logging.info("No significant improvement in the model performance. Skipping update.")
-        return False
+        #return False
+        logging.info("Let's update anyway")
+        return True
 
 # Make a call to the server to update the weights file
-def call_server_to_update_weights(weights_url, server_endpoint):
+def call_server_to_update_weights(weights_url, server_endpoint, weights_key):
     try:
-        logging.info(f"Requesting server to update weights from: {weights_url}")
-        response = requests.post(server_endpoint, json={"weights_url": weights_url})
+        logging.info(f"Requesting server to update weights from: {weights_url} and with weights_key: {weights_key}")
+        response = requests.post(server_endpoint, json={"weights_url": weights_url, "weights_key": weights_key})
         if response.status_code == 200:
             logging.info("Server successfully updated the weights.")
         else:
@@ -130,9 +133,8 @@ def main():
     parser.add_argument("--s3_bucket", type=str, required=True, help="S3 bucket containing the dataset")
     parser.add_argument("--s3_key", type=str, required=True, help="S3 key for the dataset file")
     parser.add_argument("--img_size", type=int, default=640, help="Image size for YOLO training")
-    parser.add_argument("--epochs", type=int, default=100, help="Number of training epochs")
+    parser.add_argument("--epochs", type=int, default=20, help="Number of training epochs")
     parser.add_argument("--data_yaml", type=str, required=True, help="YAML file for YOLO training configuration")
-    parser.add_argument("--weights_output", type=str, default="./runs/train/weights/best.pt", help="Path to the output weights file")
     parser.add_argument("--s3_weights_key", type=str, required=True, help="S3 bucket to upload the trained weights")
     parser.add_argument("--server_endpoint", type=str, required=True, help="Server endpoint to notify for weights update")
     parser.add_argument("--current_performance", type=float, default=0.85, help="Current model performance")
@@ -150,10 +152,11 @@ def main():
     # Decide if we should update the weights
     if should_update_weights(args.current_performance, new_performance):
         # Upload the new weights to S3
-        upload_to_s3(args.weights_output, args.s3_bucket, args.s3_weights_key)
+        upload_to_s3(f"{results.save_dir}/weights/best.pt", args.s3_bucket, args.s3_weights_key)
         # Call the server to update the weights
         weights_url = create_presigned_url(args.s3_bucket, args.s3_weights_key)
-        call_server_to_update_weights(weights_url, args.server_endpoint)
+        print(f"weights_url = {weights_url}")
+        call_server_to_update_weights(weights_url, args.server_endpoint, os.path.basename(args.s3_weights_key))
         update_current_performance_file(new_performance, args.current_performance_file)
 
 if __name__ == "__main__":

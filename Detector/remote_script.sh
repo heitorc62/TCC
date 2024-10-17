@@ -18,7 +18,7 @@ if [ -z "$2" ]; then
 fi
 
 DATASET_PATH=$1
-S3_WEIGHTS_KEY=$2
+S3_WEIGHTS_KEY="weights/${2}.pt"
 YAML_FILE="tomato.yaml"
 METRICS_FILE="best_metrics.csv"
 TRAIN_SCRIPT="src/s3_dataset_train.py"
