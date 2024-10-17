@@ -19,14 +19,14 @@ fi
 
 DATASET_PATH=$1
 S3_WEIGHTS_KEY="weights/${2}.pt"
-YAML_FILE="tomato.yaml"
-METRICS_FILE="best_metrics.csv"
-TRAIN_SCRIPT="src/s3_dataset_train.py"
+YAML_FILE="/home/heitorc62/PlantsConv/TCC/Detector/tomato.yaml"
+METRICS_FILE="/home/heitorc62/PlantsConv/TCC/Detector/best_metrics.csv"
+TRAIN_SCRIPT="/home/heitorc62/PlantsConv/TCC/Detector/src/s3_dataset_train.py"
 S3_BUCKET="tomato-dataset"
 S3_KEY="dataset/"
 SERVER_ENDPOINT="http://localhost:5000/update_weights"
 
-. .yolo_env/bin/activate
+. /home/heitorc62/PlantsConv/TCC/Detector/.yolo_env/bin/activate
 
 # Step 1: Update the tomato.yaml file with the dataset path
 echo "Updating $YAML_FILE with dataset path: $DATASET_PATH"
@@ -53,7 +53,7 @@ nohup python $TRAIN_SCRIPT \
         --data_yaml $YAML_FILE \
         --s3_weights_key $S3_WEIGHTS_KEY \
 	--server_endpoint $SERVER_ENDPOINT \
-        --current_performance $mAP50 > train.log 2>&1 &
+        --current_performance $mAP50 > /home/heitorc62/PlantsConv/TCC/Detector/train.log 2>&1 &
 
 
 # End of script
