@@ -10,7 +10,7 @@ from app.models import ImageModel, ImageStatus, ReviewerModel, InvitationModel, 
 from passlib.hash import pbkdf2_sha256
 from flask_jwt_extended import create_access_token, jwt_required
 from datetime import timedelta
-import io, secrets, boto3
+import io, secrets, requests
 from flask_login import login_user, login_required
 
 blp = Blueprint("Routes", "routes", description="Routes for the application")
@@ -28,7 +28,7 @@ def update_dataset():
 @jwt_required()
 def update_weights():
     try:
-        # Extract the weights URL and S3 key from the request
+        # Extract the weights URL from the request
         request_data = request.get_json()
         weights_url = request_data.get('weights_url')
         weights_key = request_data.get('weights_key')
@@ -36,23 +36,27 @@ def update_weights():
         if not weights_url or not weights_key:
             return jsonify({"error": "weights_url or weights_key is missing in the request."}), 400
 
-        # Download the new weights file from S3
-        s3 = boto3.client('s3')
-        s3_bucket = current_app.config["S3_BUCKET"]
+        # Local path where the weights will be saved
         local_weights_path = f"app/config/weights/{weights_key}"
 
-        # Download the file from S3 and save it locally
-        s3.download_file(s3_bucket, weights_key, local_weights_path)
-        print(f"New weights downloaded and saved at: {local_weights_path}")
-        
+        # Download the file from the presigned URL
+        response = requests.get(weights_url)
+        if response.status_code == 200:
+            with open(local_weights_path, 'wb') as f:
+                f.write(response.content)
+            print(f"New weights downloaded and saved at: {local_weights_path}")
+        else:
+            return jsonify({"error": "Failed to download the weights file from the presigned URL."}), 400
+
         # Reload the model with the new weights
-        current_app.models = load_new_weights(local_weights_path)  # Custom function to load the new weights
+        current_app.models["object_detection"] = load_new_weights(local_weights_path)  # Custom function to load the new weights
         print(f"Model reloaded with the new weights from {local_weights_path}")
         
         return jsonify({"message": "Weights updated and model reloaded successfully."}), 200
     
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
     
 
 

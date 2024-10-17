@@ -1,7 +1,11 @@
-import requests, sys
+import requests, sys, paramiko, os
+from dotenv import load_dotenv
 
 # Define the base URL for the API
 BASE_URL = "http://localhost:5000"
+
+# Load environment variables from the .env file
+load_dotenv()
 
 # Store JWT token globally after login
 jwt_token = None
@@ -73,19 +77,87 @@ def update_tomato_dataset():
         print(f"Tomato dataset updated successfully.\n{response.body}")
     else:
         print(f"Failed to update dataset. Status Code: {response.status_code}, Message: {response.json().get('msg')}")
-
+        
+        
 def retrain_model():
-    """Retrains the model with the updated dataset using JWT token."""
+    """SSH into the first machine (shell.vision.ime.usp.br), then SSH into the second machine (deepthree), and run the training script."""
+    
+    # Retrieve SSH credentials from environment variables
+    shell_host = os.getenv("SSH_HOST")  # e.g., 'shell.vision.ime.usp.br'
+    shell_user = os.getenv("SSH_USER")  # e.g., 'heitorc62'
+    shell_password = os.getenv("SSH_PASSWORD")  # Your password for the shell machine
+    
+    gpu_host = os.getenv('GPU_SSH_HOST')
+    gpu_user = os.getenv("SSH_USER")  # e.g., 'heitorc62'
+    gpu_password = os.getenv("SSH_PASSWORD")  # Your password for the deepthree machine
+    
+    
+    if not shell_host or not shell_user or not shell_password:
+        print("Missing first machine SSH credentials. Please check your .env file.")
+        return
+
+    if not gpu_user or not gpu_password:
+        print("Missing second machine SSH credentials. Please check your .env file.")
+        return
+
+    # Command to SSH into deepthree and run a script
+    deepthree_command = f"ssh {gpu_host} 'bash /home/heitorc62/PlantsConv/TCC/Detector/remote_script.sh dataset-v2 weights-v2'"
+
+    try:
+        # Create an SSH client for the shell machine
+        shell_ssh = paramiko.SSHClient()
+        shell_ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        
+        # Connect to the shell machine
+        shell_ssh.connect(hostname=shell_host, username=shell_user, password=shell_password)
+        
+        print(f"Connected to {shell_host}.")
+
+        # SSH into the deepthree machine from the shell machine and run the script
+        deepthree_ssh_command = f"sshpass -p {gpu_password} {deepthree_command}"
+
+        stdin, stdout, stderr = shell_ssh.exec_command(deepthree_ssh_command)
+        
+        # Optional: Retrieve command output/errors
+        output = stdout.read().decode()
+        errors = stderr.read().decode()
+
+        if errors:
+            print(f"Error during the second SSH to deepthree: {errors}")
+        else:
+            print(f"Training process started successfully on deepthree. Output:\n{output}")
+        
+        # Close the SSH connection to the shell machine
+        shell_ssh.close()
+
+    except Exception as e:
+        print(f"Failed to execute the remote script: {str(e)}")
+
+def update_model():
+    """Retrains the model by updating the weights using a presigned URL and S3 weights key."""
     if not jwt_token:
         print("Please log in as an admin first.")
         return
 
-    response = requests.post(f"{BASE_URL}/retrain_model", headers=get_auth_headers())
+    # Get the presigned URL and S3 weights key from user input
+    presigned_url = input("Please enter the presigned URL: ")
+    s3_weights_key = input("Please enter the S3 weights key: ")
 
+    # Prepare the payload with the presigned URL and the S3 key
+    payload = {
+        "weights_url": presigned_url,
+        "weights_key": s3_weights_key
+    }
+
+    # Send the POST request to update the model weights using the previously discussed endpoint
+    response = requests.post(f"{BASE_URL}/update_weights", json=payload, headers=get_auth_headers())
+
+    # Handle the response
     if response.status_code == 200:
-        print("Model retrained successfully.")
+        print("Model update successfully with new weights.")
     else:
-        print(f"Failed to retrain model. Status Code: {response.status_code}, Message: {response.json().get('msg')}")
+        print(f"Failed to update model. Status Code: {response.status_code}, Message: {response.json().get('error')}")
+
 
 def exit():
     """Exits the admin panel."""

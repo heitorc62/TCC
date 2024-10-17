@@ -11,6 +11,8 @@ def handle_admin_input(input_option):
     elif input_option == 4:
         update_tomato_dataset()
     elif input_option == 5:
+        update_model()
+    elif input_option == 6:
         retrain_model()
     elif input_option == 0:
         exit()
@@ -27,7 +29,8 @@ if __name__ == "__main__":
         print("2. Login with admin credentials")
         print("3. Send invitation to a reviewer")
         print("4. Update the tomato dataset with the reviewed images")
-        print("5. Retrain the model with the latest dataset")
+        print("5. Update model given a presigned URL")
+        print("6. Retrain the model with updated dataset")
         print("0. Exit")
         try:
             input_option = int(input("Enter your choice: "))
