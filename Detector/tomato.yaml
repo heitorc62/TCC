@@ -1,5 +1,5 @@
 # tomato.yaml
-path: ../data/plantdoc-Tomato-YOLO
+path: new_dataset_1
 train: images/train  # Train images (relative to 'path')
 val: images/val  # Val images (relative to 'path')
 

@@ -1,5 +1,8 @@
-[submodule "plantvillage_deeplearning_paper_analysis"]
-	path = plantvillage_deeplearning_paper_analysis
+[submodule "tomato-health-back"]
+	path = tomato-health-back
+	url = git@github.com:heitorc62/tomato-health-back.git
+[submodule "FirstPart/plantvillage_deeplearning_paper_analysis"]
+	path = FirstPart/plantvillage_deeplearning_paper_analysis
 	url = git@github.com:pedrolucasrsc/plantvillage_deeplearning_paper_analysis.git
 [submodule "tomato-health-front"]
 	path = tomato-health-front

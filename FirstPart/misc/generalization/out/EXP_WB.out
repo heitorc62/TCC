@@ -1,0 +1,10 @@
+nohup: ignoring input
+The selected model is: /home/heitorc62/PlantsConv/Plants-ConvNets-ViT/Classifier2/results/EXP_WB/from_scratch/model.pth
+The selected device is: cuda:1
+num_classes = 39
+num_ftrs = 4096
+/home/heitorc62/miniconda3/envs/heitor_env/lib/python3.7/site-packages/sklearn/metrics/_classification.py:1318: UndefinedMetricWarning: Precision is ill-defined and being set to 0.0 in labels with no predicted samples. Use `zero_division` parameter to control this behavior.
+  _warn_prf(average, modifier, msg_start, len(result))
+/home/heitorc62/miniconda3/envs/heitor_env/lib/python3.7/site-packages/sklearn/metrics/_classification.py:1318: UndefinedMetricWarning: Recall is ill-defined and being set to 0.0 in labels with no true samples. Use `zero_division` parameter to control this behavior.
+  _warn_prf(average, modifier, msg_start, len(result))
+Accuracy: 0.0672
