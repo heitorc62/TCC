@@ -1,0 +1,5 @@
+The selected model is: /home/heitorc62/PlantsConv/Plants-ConvNets-ViT/Classifier2/results/REGULAR/from_scratch/model.pth
+The selected device is: cuda:1
+num_classes = 39
+num_ftrs = 4096
+Accuracy: 0.9748

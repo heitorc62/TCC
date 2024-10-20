@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible">
+  <title>Plant ID Pal</title>
+  <link rel="icon" type="image/gif" href="images/assets/favicon.ico" /> 
+  <link rel="stylesheet" type="text/css" href="assets/css/slick.css"/>
+  <link rel="stylesheet" type="text/css" href="assets/css/styles.css">
+  <script src="assets/js/jquery-3.3.1.min.js"></script>
+  <script type="text/javascript" src="assets/js/slick.js"></script>
+  <script src="assets/js/scripts.js"></script>
+</head>
+<body>
+  <div class="header header__home">
+    <img class="header__logo" src="images/PlantIDPalLogo.svg" alt="Plant ID Pal Logo" />
+  </div>
+  <img class="hero-img" src="images/fruitsnutstablet.jpg" alt="apples and nuts">
+  <nav class="home-menu">
+    <a href="ornamentals.html" class="home-menu__link">
+      <div class="home-menu__item">
+        <img class="home-menu__icon" src="images/ornamentals80.svg" alt="tree icon">
+        <p class="home-menu__text">Ornamentals</p>
+      </div>
+    </a>
+    <a href="flwrInPlants.html" class="home-menu__link">
+      <div class="home-menu__item">
+        <img class="home-menu__icon" src="images/flower80.svg" alt="flower icon">
+        <p class="home-menu__text">Flowers & Indoor Plants</p>
+      </div>
+    </a>
+    <a href="fruitNuts.html" class="home-menu__link">
+      <div class="home-menu__item">
+        <img class="home-menu__icon" src="images/fruitsNuts80.svg" alt="apple icon">
+        <p class="home-menu__text">Fruits & Nuts</p>
+      </div>
+    </a>
+    <a href="vegetables.html" class="home-menu__link">
+      <div class="home-menu__item">
+        <img class="home-menu__icon" src="images/vegetables80.svg" alt="peas icon">
+        <p class="home-menu__text">Vegetables</p>
+      </div>
+    </a>
+    <a href="quizpage.html" class="home-menu__link">
+      <div class="home-menu__item">
+        <img class="home-menu__icon" src="images/quiz80.svg" alt="checklist icon">
+        <p class="home-menu__text">Quizzes</p>
+      </div>
+    </a>
+    <a href="glossary.html" class="home-menu__link" style="border-bottom: none;">
+      <div class="home-menu__item">
+        <img class="home-menu__icon" src="images/glossary.svg" alt="checklist icon">
+        <p class="home-menu__text">Glossary</p>
+      </div>
+    </a>
+  </nav>
+
+   <footer>
+    <img class="footer__logo" src="images/PUExtension.svg" alt="Purdue Extensions Logo" >
+    <div class="footer__links">
+      <a href="instructions.html" class="footer__link">Instructions</a>
+      <span class="footer__item">|</span>
+      <a href="suggestions.html" class="footer__link">Suggestions for Use</a>
+      <span class="footer__item">|</span>
+      <a href="credits.html" class="footer__link">Credits</a>
+    </div>
+  </footer>
+</body>
+</html>

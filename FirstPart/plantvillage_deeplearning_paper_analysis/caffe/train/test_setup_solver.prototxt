@@ -1,0 +1,15 @@
+test_iter: 1
+test_interval: 1
+base_lr: 0.005
+display: 1
+max_iter: 1  # Perform only one iteration
+lr_policy: "step"
+gamma: 0.1
+momentum: 0.9
+weight_decay: 0.0005
+stepsize: 18232
+snapshot: 1  # Save snapshot after 1 iteration
+snapshot_prefix: "/TCC/train_results/snapshots"
+solver_mode: GPU
+net: "train_val.prototxt"
+solver_type: SGD

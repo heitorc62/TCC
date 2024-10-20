@@ -1,0 +1,6 @@
+*.h5
+*.pyc
+caffe/data/raw/
+data/lmdb/*
+data/raw/*
+caffe/src/utils/__init__.pyc
