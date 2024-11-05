@@ -64,27 +64,6 @@ def train_yolo(data_yaml, epochs=100, img_size=640, device=0):
         logging.error(f"Error during YOLO training: {e}")
         raise
 
-# Upload the final weights file to the S3 bucket
-def upload_to_s3(file_path, bucket_name, object_name=None):
-    s3 = boto3.client('s3')
-    
-    if object_name is None:
-        object_name = os.path.basename(file_path)
-    
-    try:
-        logging.info(f"Uploading {file_path} to S3: s3://{bucket_name}/{object_name}")
-        s3.upload_file(file_path, bucket_name, object_name)
-        logging.info(f"File uploaded to S3 successfully: s3://{bucket_name}/{object_name}")
-    except FileNotFoundError:
-        logging.error(f"The file {file_path} was not found.")
-        raise
-    except NoCredentialsError:
-        logging.error("S3 credentials not available.")
-        raise
-    except ClientError as e:
-        logging.error(f"S3 client error: {e}")
-        raise
-
 # Check if the weights should be updated based on the performance
 def should_update_weights(current_performance, new_performance, threshold=0.05):
     """Returns True if new performance is significantly better than the current one."""
@@ -99,14 +78,27 @@ def should_update_weights(current_performance, new_performance, threshold=0.05):
         return True
 
 # Make a call to the server to update the weights file
-def call_server_to_update_weights(weights_url, server_endpoint, weights_key):
+def call_server_to_update_weights(weights_file_path, server_endpoint):
+    """
+    Sends the weights file to the server for updating.
+    
+    :param weights_file_path: Path to the weights file to send.
+    :param server_endpoint: The server endpoint to send the weights to.
+    """
     try:
-        logging.info(f"Requesting server to update weights from: {weights_url} and with weights_key: {weights_key}")
-        response = requests.post(server_endpoint, json={"weights_url": weights_url, "weights_key": weights_key})
+        logging.info(f"Sending weights file to server from: {weights_file_path}")
+        
+        # Open the weights file in binary mode and send it with the request
+        with open(weights_file_path, 'rb') as weights_file:
+            data = {"weights": weights_file}
+            
+            response = requests.post(server_endpoint, data=data)
+        
+        # Check for server response
         if response.status_code == 200:
             logging.info("Server successfully updated the weights.")
         else:
-            logging.error(f"Server responded with error: {response.status_code}")
+            logging.error(f"Server responded with error: {response.status_code}, Message: {response.text}")
     except Exception as e:
         logging.error(f"Error while requesting server to update weights: {e}")
         raise
@@ -114,16 +106,6 @@ def call_server_to_update_weights(weights_url, server_endpoint, weights_key):
 def update_current_performance_file(new_performance, current_performance_file):
     with open(current_performance_file, 'w') as f:
         f.write(str(new_performance))
-
-def create_presigned_url(bucket_name, object_name, expiration=3600):
-    s3 = boto3.client('s3')
-    try:
-        response = s3.generate_presigned_url('get_object', Params={'Bucket': bucket_name, 'Key': object_name}, ExpiresIn=expiration)
-        logging.info(f"Presigned URL generated for s3://{bucket_name}/{object_name}")
-        return response
-    except ClientError as e:
-        logging.error(f"Error generating presigned URL: {e}")
-        raise
 
 
 # Main function to coordinate the workflow
@@ -151,12 +133,7 @@ def main():
 
     # Decide if we should update the weights
     if should_update_weights(args.current_performance, new_performance):
-        # Upload the new weights to S3
-        upload_to_s3(f"{results.save_dir}/weights/best.pt", args.s3_bucket, args.s3_weights_key)
-        # Call the server to update the weights
-        weights_url = create_presigned_url(args.s3_bucket, args.s3_weights_key)
-        print(f"weights_url = {weights_url}")
-        call_server_to_update_weights(weights_url, args.server_endpoint, os.path.basename(args.s3_weights_key))
+        call_server_to_update_weights(f"{results.save_dir}/weights/best.pt", args.server_endpoint, os.path.basename(args.s3_weights_key))
         update_current_performance_file(new_performance, args.current_performance_file)
 
 if __name__ == "__main__":

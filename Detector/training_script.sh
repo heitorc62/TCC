@@ -17,6 +17,13 @@ if [ -z "$2" ]; then
   exit 1
 fi
 
+# Check if an Ngrok URL is provided; if so, use it, otherwise default to localhost
+if [ -z "$3" ]; then
+  SERVER_ENDPOINT="http://localhost:5000/update_weights"
+else
+  SERVER_ENDPOINT="$3/update_weights"
+fi
+
 DATASET_PATH=$1
 S3_WEIGHTS_KEY="weights/${2}.pt"
 YAML_FILE="/home/heitorc62/PlantsConv/TCC/Detector/tomato.yaml"
@@ -52,7 +59,7 @@ nohup python $TRAIN_SCRIPT \
         --s3_key $S3_KEY \
         --data_yaml $YAML_FILE \
         --s3_weights_key $S3_WEIGHTS_KEY \
-	--server_endpoint $SERVER_ENDPOINT \
+	      --server_endpoint $SERVER_ENDPOINT \
         --current_performance $mAP50 > /home/heitorc62/PlantsConv/TCC/Detector/train.log 2>&1 &
 
 
