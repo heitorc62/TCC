@@ -4,17 +4,18 @@ import argparse
 import logging
 import requests
 from ultralytics import YOLO
+import torch
 from botocore.exceptions import NoCredentialsError, ClientError
-from dotenv import load_dotenv
-
-load_dotenv()
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Fetch the dataset from S3
-def fetch_dataset(s3_bucket, s3_prefix, local_dir):
-    s3 = boto3.client('s3')
+def fetch_dataset(s3_bucket, s3_endpoint, access_key_id, secret_access_key, s3_prefix, local_dir):
+    s3 = boto3.client('s3',
+                      endpoint_url=s3_endpoint,
+                      aws_access_key_id=access_key_id,
+                      aws_secret_access_key=secret_access_key)
     try:
         # List objects in the bucket under the prefix (folder)
         paginator = s3.get_paginator('list_objects_v2')
@@ -52,7 +53,7 @@ def fetch_dataset(s3_bucket, s3_prefix, local_dir):
         raise
 
 # Train YOLO using this dataset
-def train_yolo(data_yaml, epochs=100, img_size=640, device=0):
+def train_yolo(data_yaml, epochs=100, img_size=640, device=0 if torch.cuda.is_available() else ""):
     logging.info(f"Starting YOLO training with {epochs} epochs and image size {img_size}.")
     try:
         model = YOLO("yolov8n.pt")  # Build from YAML and transfer weights
@@ -111,13 +112,15 @@ def update_current_performance_file(new_performance, current_performance_file):
 # Main function to coordinate the workflow
 def main():
     parser = argparse.ArgumentParser(description="Train YOLO model and manage weights.")
-    parser.add_argument("--save_path", type=str, default="../datasets/tomato-dataset.zip", help="Path to save the dataset")
+    parser.add_argument("--save_path", type=str, default="../datasets", help="Path to save the dataset")
+    parser.add_argument("--s3_endpoint", type=str, default="https://s3.amazonaws.com", help="S3 endpoint URL")
     parser.add_argument("--s3_bucket", type=str, required=True, help="S3 bucket containing the dataset")
+    parser.add_argument("--access_key_id", type=str, required=True, help="Access key for S3 access")
+    parser.add_argument("--secret_access_key", type=str, required=True, help="Secret key for S3 access")
     parser.add_argument("--s3_key", type=str, required=True, help="S3 key for the dataset file")
     parser.add_argument("--img_size", type=int, default=640, help="Image size for YOLO training")
     parser.add_argument("--epochs", type=int, default=20, help="Number of training epochs")
     parser.add_argument("--data_yaml", type=str, required=True, help="YAML file for YOLO training configuration")
-    parser.add_argument("--s3_weights_key", type=str, required=True, help="S3 bucket to upload the trained weights")
     parser.add_argument("--server_endpoint", type=str, required=True, help="Server endpoint to notify for weights update")
     parser.add_argument("--current_performance", type=float, default=0.85, help="Current model performance")
     parser.add_argument("--current_performance_file", type=str, default="../best_metrics.csv", help="File to store current performance")
@@ -125,7 +128,7 @@ def main():
     args = parser.parse_args()
 
     # Fetch dataset from S3
-    #fetch_dataset(args.s3_bucket, args.s3_key, args.save_path)
+    #fetch_dataset(args.s3_bucket, args.s3_endpoint, args.access_key_id, args.secret_access_key, args.s3_key, args.save_path)
     
     # Train YOLO model
     results = train_yolo(data_yaml=args.data_yaml, epochs=args.epochs, img_size=args.img_size)

@@ -11,3 +11,12 @@ server/.venv
 *.pyc
 
 server/.env
+
+# Ignore all .venv directories
+.venv/
+
+# Ignore all downloaded datasets
+datasets/
+
+# Ignore all runs directories
+runs/
