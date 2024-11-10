@@ -128,16 +128,25 @@ def main():
     args = parser.parse_args()
 
     # Fetch dataset from S3
-    #fetch_dataset(args.s3_bucket, args.s3_endpoint, args.access_key_id, args.secret_access_key, args.s3_key, args.save_path)
+    print("Fetching dataset from S3...")
+    fetch_dataset(args.s3_bucket, args.s3_endpoint, args.access_key_id, args.secret_access_key, args.s3_key, args.save_path)
     
     # Train YOLO model
+    print("Training YOLO model...")
     results = train_yolo(data_yaml=args.data_yaml, epochs=args.epochs, img_size=args.img_size)
     new_performance = results.results_dict["metrics/mAP50(B)"]  # Example metric from YOLO training results
 
     # Decide if we should update the weights
+    print("Checking if we should update the weights...")
     if should_update_weights(args.current_performance, new_performance):
+        print("Updating weights (server call)...")
         call_server_to_update_weights(f"{results.save_dir}/weights/best.pt", args.server_endpoint, os.path.basename(args.s3_weights_key))
+        print("Weights updated successfully.")
+        print("Updating current performance file...")
         update_current_performance_file(new_performance, args.current_performance_file)
+        print("Current performance updated.")
+    else:
+        print("No update needed.")
 
 if __name__ == "__main__":
     main()
