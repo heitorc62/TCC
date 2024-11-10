@@ -3,6 +3,12 @@
 # Exit immediately if any command exits with a non-zero status
 set -e
 
+# Gets the current directory of the script
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+
+# Print the directory
+echo "Script is located in: $SCRIPT_DIR"
+
 # Check if a dataset path is provided
 if [ -z "$1" ]; then
   echo "Error: No dataset path provided."
@@ -37,9 +43,9 @@ if [ -z "$5" ]; then
 fi
 
 DATASET_PATH=$1
-YAML_FILE="/home/heitorc62/PlantsConv/TCC/Detector/tomato.yaml"
-METRICS_FILE="/home/heitorc62/PlantsConv/TCC/Detector/best_metrics.csv"
-TRAIN_SCRIPT="/home/heitorc62/PlantsConv/TCC/Detector/src/s3_dataset_train.py"
+YAML_FILE="$SCRIPT_DIR/tomato.yaml"
+METRICS_FILE="$SCRIPT_DIR/best_metrics.csv"
+TRAIN_SCRIPT="$SCRIPT_DIR/src/s3_dataset_train.py"
 S3_BUCKET="tomato-dataset"
 S3_KEY="dataset/"
 SERVER_ENDPOINT="$3/update_weights"
@@ -47,7 +53,7 @@ S3_ENDPOINT=$4
 S3_ACCESS_KEY=$5
 S3_SECRET_ACCESS_KEY=$6
 
-. /home/heitorc62/PlantsConv/TCC/Detector/.yolo_env/bin/activate
+. $SCRIPT_DIR/.venv/bin/activate
 
 # Step 1: Update the tomato.yaml file with the dataset path
 echo "Updating $YAML_FILE with dataset path: $DATASET_PATH"
@@ -76,7 +82,7 @@ nohup python $TRAIN_SCRIPT \
         --s3_key $S3_KEY \
         --data_yaml $YAML_FILE \
 	      --server_endpoint $SERVER_ENDPOINT \
-        --current_performance $mAP50 > "${TRAIN_SCRIPT%/*}/train.log" 2>&1 &
+        --current_performance $mAP50 > "$SCRIPT_DIR/train.log" 2>&1 &
 
 
 # End of script
