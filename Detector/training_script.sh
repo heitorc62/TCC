@@ -75,7 +75,7 @@ echo "mAP50: $mAP50"
 echo "Running training script with dataset path: $DATASET_PATH"
 
 nohup python $TRAIN_SCRIPT \
-        --save_path datasets/$DATASET_PATH \
+        --save_path $SCRIPT_DIR/datasets/$DATASET_PATH \
         --s3_endpoint $S3_ENDPOINT \
         --access_key_id $S3_ACCESS_KEY \
         --secret_access_key $S3_SECRET_ACCESS_KEY \
