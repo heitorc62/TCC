@@ -25,19 +25,19 @@ if [ -z "$3" ]; then
 fi
 
 # Check if and Ngrok URL for S3 is provided; if so, use it, otherwise default to localhost
-if [-z "$4"]; then
+if [ -z "$4" ]; then
   echo "Error: No S3 url provided."
   echo "Usage: ./remote_script.sh <dataset_path> <s3_weights_key> <server_endpoint> <s3_url> <s3_access_key> <s3_secret_access_key>"
   exit 1
-else
+fi
 
-if [ -z "$5"]; then
+if [ -z "$5" ]; then
   echo "Error: No S3 access key provided."
   echo "Usage: ./remote_script.sh <dataset_path> <s3_weights_key> <server_endpoint> <s3_url> <s3_access_key> <s3_secret_access_key>"
   exit 1
 fi
 
-if [ -z "$6"]; then
+if [ -z "$6" ]; then
   echo "Error: No SECRET_ACCESS_KEY provided."
   echo "Usage: ./remote_script.sh <dataset_path> <s3_weights_key> <server_endpoint> <s3_url> <s3_access_key> <s3_secret_access_key>"
   exit 1
