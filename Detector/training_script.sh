@@ -48,10 +48,10 @@ METRICS_FILE="$SCRIPT_DIR/best_metrics.csv"
 TRAIN_SCRIPT="$SCRIPT_DIR/src/s3_dataset_train.py"
 S3_BUCKET="tomato-dataset"
 S3_KEY="dataset/"
-SERVER_ENDPOINT="$3/update_weights"
-S3_ENDPOINT=$4
-S3_ACCESS_KEY=$5
-S3_SECRET_ACCESS_KEY=$6
+SERVER_ENDPOINT="$2/update_weights"
+S3_ENDPOINT=$3
+S3_ACCESS_KEY=$4
+S3_SECRET_ACCESS_KEY=$5
 
 . $SCRIPT_DIR/.venv/bin/activate
 
@@ -73,20 +73,6 @@ echo "mAP50: $mAP50"
 
 # Step 3: Run the src/s3_dataset_train.py script with the dataset path
 echo "Running training script with dataset path: $DATASET_PATH"
-
-echo "Running the following command:"
-
-echo "nohup python $TRAIN_SCRIPT \
-    --save_path datasets/$DATASET_PATH \
-    --s3_endpoint $S3_ENDPOINT \
-    --access_key_id $S3_ACCESS_KEY \
-    --secret_access_key $S3_SECRET_ACCESS_KEY \
-    --s3_bucket $S3_BUCKET \
-    --s3_key $S3_KEY \
-    --data_yaml $YAML_FILE \
-    --server_endpoint $SERVER_ENDPOINT \
-    --current_performance $mAP50 > \"$SCRIPT_DIR/train.log\" 2>&1 &"
-
 
 nohup python $TRAIN_SCRIPT \
         --save_path datasets/$DATASET_PATH \
