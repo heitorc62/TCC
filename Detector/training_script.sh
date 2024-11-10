@@ -6,45 +6,37 @@ set -e
 # Check if a dataset path is provided
 if [ -z "$1" ]; then
   echo "Error: No dataset path provided."
-  echo "Usage: ./remote_script.sh <dataset_path> <s3_weights_key> <server_endpoint> <s3_url> <s3_access_key> <s3_secret_access_key>"
-  exit 1
-fi
-
-# Check if an S3 weights key is provided
-if [ -z "$2" ]; then
-  echo "Error: No S3 weights key provided."
-  echo "Usage: ./remote_script.sh <dataset_path> <s3_weights_key> <server_endpoint> <s3_url> <s3_access_key> <s3_secret_access_key>"
+  echo "Usage: ./remote_script.sh <dataset_path> <server_endpoint> <s3_url> <s3_access_key> <s3_secret_access_key>"
   exit 1
 fi
 
 # Check if an Ngrok URL is provided; if so, use it, otherwise default to localhost
 if [ -z "$3" ]; then
   echo "Error: No server endpoint provided."
-  echo "Usage: ./remote_script.sh <dataset_path> <s3_weights_key> <server_endpoint> <s3_url> <s3_access_key> <s3_secret_access_key>"
+  echo "Usage: ./remote_script.sh <dataset_path> <server_endpoint> <s3_url> <s3_access_key> <s3_secret_access_key>"
   exit 1
 fi
 
 # Check if and Ngrok URL for S3 is provided; if so, use it, otherwise default to localhost
 if [ -z "$4" ]; then
   echo "Error: No S3 url provided."
-  echo "Usage: ./remote_script.sh <dataset_path> <s3_weights_key> <server_endpoint> <s3_url> <s3_access_key> <s3_secret_access_key>"
+  echo "Usage: ./remote_script.sh <dataset_path> <server_endpoint> <s3_url> <s3_access_key> <s3_secret_access_key>"
   exit 1
 fi
 
 if [ -z "$5" ]; then
   echo "Error: No S3 access key provided."
-  echo "Usage: ./remote_script.sh <dataset_path> <s3_weights_key> <server_endpoint> <s3_url> <s3_access_key> <s3_secret_access_key>"
+  echo "Usage: ./remote_script.sh <dataset_path> <server_endpoint> <s3_url> <s3_access_key> <s3_secret_access_key>"
   exit 1
 fi
 
 if [ -z "$6" ]; then
   echo "Error: No SECRET_ACCESS_KEY provided."
-  echo "Usage: ./remote_script.sh <dataset_path> <s3_weights_key> <server_endpoint> <s3_url> <s3_access_key> <s3_secret_access_key>"
+  echo "Usage: ./remote_script.sh <dataset_path> <server_endpoint> <s3_url> <s3_access_key> <s3_secret_access_key>"
   exit 1
 fi
 
 DATASET_PATH=$1
-S3_WEIGHTS_KEY="weights/${2}.pt"
 YAML_FILE="/home/heitorc62/PlantsConv/TCC/Detector/tomato.yaml"
 METRICS_FILE="/home/heitorc62/PlantsConv/TCC/Detector/best_metrics.csv"
 TRAIN_SCRIPT="/home/heitorc62/PlantsConv/TCC/Detector/src/s3_dataset_train.py"
@@ -83,7 +75,6 @@ nohup python $TRAIN_SCRIPT \
         --s3_bucket $S3_BUCKET \
         --s3_key $S3_KEY \
         --data_yaml $YAML_FILE \
-        --s3_weights_key $S3_WEIGHTS_KEY \
 	      --server_endpoint $SERVER_ENDPOINT \
         --current_performance $mAP50 > "${TRAIN_SCRIPT%/*}/train.log" 2>&1 &
 
