@@ -1,6 +1,6 @@
 # tomato.yaml
-train: ../TCC/Detector/datasets/teste_minio/train/images  # Train images (relative to 'path')
-val: ../TCC/Detector/datasets/teste_minio/val/images  # Val images (relative to 'path')
+train: datasets/teste_minio/train/images  # Train images (relative to 'path')
+val: datasets/teste_minio/val/images  # Val images (relative to 'path')
 
 names:
   0: 'Tomato Early blight leaf'
