@@ -140,7 +140,7 @@ def main():
     print("Checking if we should update the weights...")
     if should_update_weights(args.current_performance, new_performance):
         print("Updating weights (server call)...")
-        call_server_to_update_weights(f"{results.save_dir}/weights/best.pt", args.server_endpoint, os.path.basename(args.s3_weights_key))
+        call_server_to_update_weights(f"{results.save_dir}/weights/best.pt", args.server_endpoint)
         print("Weights updated successfully.")
         print("Updating current performance file...")
         update_current_performance_file(new_performance, args.current_performance_file)
