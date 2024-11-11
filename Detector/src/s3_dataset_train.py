@@ -124,7 +124,7 @@ def main():
     parser.add_argument("--data_yaml", type=str, required=True, help="YAML file for YOLO training configuration")
     parser.add_argument("--server_endpoint", type=str, required=True, help="Server endpoint to notify for weights update")
     parser.add_argument("--current_performance", type=float, default=0.85, help="Current model performance")
-    parser.add_argument("--current_performance_file", type=str, default="../best_metrics.csv", help="File to store current performance")
+    parser.add_argument("--current_performance_file", type=str, default="./best_metrics.csv", help="File to store current performance")
     
     args = parser.parse_args()
 
