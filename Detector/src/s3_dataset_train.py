@@ -88,12 +88,13 @@ def call_server_to_update_weights(weights_file_path, server_endpoint):
     """
     try:
         logging.info(f"Sending weights file to server from: {weights_file_path}")
+        logging.info(f"File size: {os.path.getsize(weights_file_path)}")
         
         # Open the weights file in binary mode and send it with the request
         with open(weights_file_path, 'rb') as weights_file:
-            data = {"weights": weights_file}
+            files = {"weights": weights_file}
             
-            response = requests.post(server_endpoint, data=data)
+            response = requests.post(server_endpoint, files=files)
         
         # Check for server response
         if response.status_code == 200:
