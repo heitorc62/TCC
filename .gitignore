@@ -16,7 +16,7 @@ server/.env
 .venv/
 
 # Ignore all downloaded datasets
-datasets/
+datasets/teste_minio
 
 # Ignore all runs directories
 runs/
